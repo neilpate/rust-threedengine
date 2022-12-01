@@ -4,12 +4,18 @@ use std::io;
 use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
+use ndarray::prelude::*;
+use ndarray::Array;
+
 //#[derive(Debug)]
 #[derive(Debug, Clone, Copy)]
 pub struct Vert {
     x: f32,
     y: f32,
     z: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32
 }
 
 impl Vert {
@@ -38,10 +44,14 @@ pub struct Tri {
     v1: Vert,
     v2: Vert,
     v3: Vert,
+    pub v1: Vert,
+    pub v2: Vert,
+    pub v3: Vert
 }
 #[derive(Debug)]
 pub struct Object {
     tris: Vec<Tri>,
+    pub tris : Vec<Tri>
 }
 
 impl Object {
@@ -96,6 +106,18 @@ impl Object {
 
         Ok(Object { tris: mesh })
     }
+    
+
+    }
+
+pub fn calc_proj_matrix() -> Array2<f32> {
+     let mut pm = Array::<f32, _>::zeros((4, 4).f());
+     pm[[0,0]] = 1.29904;
+     pm[[1,1]] = 1.73205;
+     pm[[2,2]] = 1.0001;
+     pm[[2,3]] = 1.0;
+     pm[[3,2]] = -0.10001;
+     pm        
 }
 
 pub fn Create_Projection_Matrix() -> Array<f32, Ix2> {
@@ -106,6 +128,11 @@ pub fn Create_Projection_Matrix() -> Array<f32, Ix2> {
         [0.0, 0.0, -0.10001, 0.0],
     ]);
     pm
+}
+pub fn calc_view_matrix() -> Array2<f32> {
+    let mut vm = Array::<f32, _>::eye(4);
+    vm[[3,2]] = 10.0;
+    vm        
 }
 
 #[test]
@@ -124,4 +151,21 @@ fn test_create_projection_matrix() {
     let result = Create_Projection_Matrix();
 
     assert_eq!(expected, result);
+}
+
+pub fn calc_trans_matrix(x:f32, y:f32,z:f32) -> Array2<f32> {
+    let mut tm = Array::eye(4);
+    tm[[3,0]] = x;
+    tm[[3,1]] = y;
+    tm[[3,2]] = z;
+    tm
+
+}
+
+pub fn mult_vec_matrix(v_in:Array1<f32>, m:&Array2<f32>) -> Array1<f32> {
+    let mut v_out = Array::<f32, _>::zeros((3).f());
+    v_out[[0]] = m[[0,0]] * v_in[[0]] + m[[1,0]] * v_in[[1]] + m[[2,0]] * v_in[[2]] + m[[3,0]]; 
+    v_out[[1]] = m[[0,1]] * v_in[[0]] + m[[1,1]] * v_in[[1]] + m[[2,1]] * v_in[[2]] + m[[3,1]]; 
+    v_out[[2]] = m[[0,2]] * v_in[[0]] + m[[1,2]] * v_in[[1]] + m[[2,2]] * v_in[[2]] + m[[3,2]]; 
+    v_out        
 }
