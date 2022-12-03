@@ -4,6 +4,19 @@ use std::io;
 use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
+
+pub struct Screen {
+    width : i32,
+    height : i32,
+}
+
+pub struct Camera {
+    fov : f32,
+    near_plane : f32,
+    far_plane : f32,
+}
+
+
 //#[derive(Debug)]
 #[derive(Debug, Clone, Copy)]
 pub struct Vert {
