@@ -5,14 +5,10 @@ use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
 use ndarray::prelude::*;
-use ndarray::Array;
 
 //#[derive(Debug)]
 #[derive(Debug, Clone, Copy)]
 pub struct Vert {
-    x: f32,
-    y: f32,
-    z: f32,
     pub x: f32,
     pub y: f32,
     pub z: f32
@@ -41,16 +37,12 @@ impl Vert {
 
 #[derive(Debug)]
 pub struct Tri {
-    v1: Vert,
-    v2: Vert,
-    v3: Vert,
     pub v1: Vert,
     pub v2: Vert,
     pub v3: Vert
 }
 #[derive(Debug)]
 pub struct Object {
-    tris: Vec<Tri>,
     pub tris : Vec<Tri>
 }
 
@@ -146,7 +138,7 @@ fn test_create_projection_matrix() {
         [1.29904, 0.0, 0.0, 0.0],
         [0.0, 1.73205, 0.0, 0.0],
         [0.0, 0.0, 1.0001, 1.0],
-        [0.0, 0.0, -0.10001, 1.0],
+        [0.0, 0.0, -0.10001, 0.0],
     ]);
     let result = Create_Projection_Matrix();
 
