@@ -5,15 +5,41 @@ use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
 
+use float_eq::{assert_float_eq, float_eq, derive_float_eq};
+
 pub struct Screen {
-    width : i32,
-    height : i32,
+     width : i32,
+     height : i32,
 }
 
 pub struct Camera {
     fov : f32,
     near_plane : f32,
     far_plane : f32,
+}
+
+#[derive_float_eq(
+    ulps_tol = "PointUlps", 
+    ulps_tol_derive = "Clone, Copy, Debug, PartialEq",
+    debug_ulps_diff = "PointDebugUlpsDiff",
+    debug_ulps_diff_derive = "Clone, Copy, Debug, PartialEq",
+    all_tol = "f32"
+)]
+#[derive(Debug, PartialEq, Clone, Copy)]
+
+// #[derive_float_eq(
+//     ulps_tol = "PointUlps", 
+//     ulps_tol_derive = "Clone, Copy, Debug, PartialEq",
+//     debug_ulps_diff = "PointDebugUlpsDiff",
+//     debug_ulps_diflf_derive = "Clone, Copy, Debug, PartialEq",
+//     all_tol = "f32"
+// )]
+
+
+struct AFQ {
+    aspect_ratio : f32,
+    fov : f32,
+    q : f32,
 }
 
 
@@ -123,18 +149,28 @@ pub fn calc_proj_matrix() -> Array2<f32> {
      pm        
 }
 
+
+fn calc_afq(screen: Screen, camera:Camera) -> AFQ{
+    let aspect_ratio = (screen.height as f32) / (screen.width as f32);
+
+    let fov = 1./((camera.fov / 2.).to_radians().tan());
+
+    let q = (camera.far_plane - camera.near_plane) / camera.far_plane;
+    AFQ {aspect_ratio, fov, q}
+}
+
 pub fn Create_Projection_Matrix() -> Array<f32, Ix2> {
     let pm = arr2(&[
-        [1.29904, 0.0, 0.0, 0.0],
-        [0.0, 1.73205, 0.0, 0.0],
-        [0.0, 0.0, 1.0001, 1.0],
-        [0.0, 0.0, -0.10001, 0.0],
+        [1.29904, 0., 0., 0.],
+        [0., 1.73205, 0.0, 0.],
+        [0., 0., 1.0001, 1.],
+        [0., 0., -0.10001, 0.],
     ]);
     pm
 }
 pub fn calc_view_matrix() -> Array2<f32> {
     let mut vm = Array::<f32, _>::eye(4);
-    vm[[3,2]] = 10.0;
+    vm[[3,2]] = 10.;
     vm        
 }
 
@@ -146,14 +182,27 @@ fn test1() {
 #[test]
 fn test_create_projection_matrix() {
     let expected = arr2(&[
-        [1.29904, 0.0, 0.0, 0.0],
-        [0.0, 1.73205, 0.0, 0.0],
-        [0.0, 0.0, 1.0001, 1.0],
-        [0.0, 0.0, -0.10001, 0.0],
+        [1.29904, 0., 0., 0.],
+        [0., 1.73205, 0., 0.],
+        [0., 0., 1.0001, 1.],
+        [0., 0., -0.10001, 0.],
     ]);
     let result = Create_Projection_Matrix();
 
     assert_eq!(expected, result);
+}
+
+#[test]
+fn test_calc_afq(){
+    let expected = AFQ { aspect_ratio : 0.75, fov : 1.73205, q : 1.0001};
+
+    let screen = Screen { width : 800, height :600};
+    let camera = Camera {fov: 60., near_plane : 0.1, far_plane : 1000.};
+
+    let result = calc_afq(screen, camera);
+
+  //  assert_eq!(expected, result);
+  assert_float_eq!(expected, result, abs_all <= 0.001);
 }
 
 pub fn calc_trans_matrix(x:f32, y:f32,z:f32) -> Array2<f32> {
