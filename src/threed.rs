@@ -178,7 +178,7 @@ fn test1() {
 }
 
 #[test]
-fn test_create_projection_matrix() {
+fn test_create_projection_matrix_1() {
     let expected = arr2(&[
         [1.2990382, 0., 0., 0.],
         [0., 1.7320509, 0., 0.],
@@ -193,6 +193,26 @@ fn test_create_projection_matrix() {
 
     assert_eq!(expected, result);
 }
+
+
+#[test]
+fn test_create_projection_matrix_2() {
+    let expected = arr2(&[
+        [0.65161270, 0., 0., 0.],
+        [0., 1.3032254, 0., 0.],
+        [0., 0., 1.001001, 1.],
+        [0., 0., -2.002002, 0.],
+    ]);
+
+    let screen = Screen { width : 900, height :450};
+    let camera = Camera {fov: 75., near_plane : 2., far_plane : 2000.};
+
+    let result = Create_Projection_Matrix(screen, camera);
+
+    assert_eq!(expected, result);
+}
+
+
 
 #[test]
 fn test_calc_afq(){
