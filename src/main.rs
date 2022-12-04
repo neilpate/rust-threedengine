@@ -12,21 +12,26 @@ fn main() {
     //     Err(_) => (),
     // }
 
-    let pm = threed::calc_proj_matrix();
-  //  println!("{}", pm);
+    let screen = threed::Screen { width : 800, height :600};
+    let camera = threed::Camera {fov: 60., near_plane : 0.1, far_plane : 1000.};
 
-    let vm = threed::calc_view_matrix();
-  //  println!("{}", vm);
+    let pm = threed::Create_Projection_Matrix(screen, camera);
+    println!("Projection matrix:");
+    println!("{}", pm);
 
-    let tm = threed::calc_trans_matrix(0.0, 0.0, 0.0);
-    println!("Translation matrix:{}", tm);
 
-    let pt = array![
-        5.,6.,7.,
-    ]; 
-   // println!("{}", pt);
+  //   let vm = threed::calc_view_matrix();
+  // //  println!("{}", vm);
+
+  //   let tm = threed::calc_trans_matrix(0.0, 0.0, 0.0);
+  //   println!("Translation matrix:{}", tm);
+
+  //   let pt = array![
+  //       5.,6.,7.,
+  //   ]; 
+  //  // println!("{}", pt);
     
-    let tt = threed::mult_vec_matrix(pt, &tm);
+  //   let tt = threed::mult_vec_matrix(pt, &tm);
     
    // println!("{}", tt);
 
@@ -37,21 +42,18 @@ fn main() {
 
 
 
-    for tri in obj.unwrap().tris  {
-        //let new_v1 = tri.v1;
-        let v1_trans = threed::mult_vec_matrix(array![tri.v1.x, tri.v1.y, tri.v1.z], &tm);
-        let v2_trans = threed::mult_vec_matrix(array![tri.v2.x, tri.v2.y, tri.v2.z], &tm);
-        let v3_trans = threed::mult_vec_matrix(array![tri.v3.x, tri.v3.y, tri.v3.z], &tm);
+    // for tri in obj.unwrap().tris  {
+    //     //let new_v1 = tri.v1;
+    //     let v1_trans = threed::mult_vec_matrix(array![tri.v1.x, tri.v1.y, tri.v1.z], &tm);
+    //     let v2_trans = threed::mult_vec_matrix(array![tri.v2.x, tri.v2.y, tri.v2.z], &tm);
+    //     let v3_trans = threed::mult_vec_matrix(array![tri.v3.x, tri.v3.y, tri.v3.z], &tm);
     
-        println!("{}", v1_trans);
+    //     println!("{}", v1_trans);
 
-        let v1_view = threed::mult_vec_matrix(v1_trans, &vm);
-        let v2_view = threed::mult_vec_matrix(v2_trans, &vm);
-        let v3_view = threed::mult_vec_matrix(v3_trans, &vm);
-
-
-
-    }
+    //     let v1_view = threed::mult_vec_matrix(v1_trans, &vm);
+    //     let v2_view = threed::mult_vec_matrix(v2_trans, &vm);
+    //     let v3_view = threed::mult_vec_matrix(v3_trans, &vm);
+    // }
 
    // let tris = obj.as_ref().unwrap().tris;
 
