@@ -5,7 +5,6 @@ use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
 
-use approx::assert_abs_diff_eq;
 
 use float_eq::{assert_float_eq, float_eq, derive_float_eq};
 
@@ -186,14 +185,6 @@ pub fn calc_trans_matrix(x:f32, y:f32,z:f32) -> Array2<f32> {
     tm[[3,2]] = z;
     tm
 
-}
-
-pub fn mult_vec_matrix(v_in:Array1<f32>, m:&Array2<f32>) -> Array1<f32> {
-    let mut v_out = Array::<f32, _>::zeros((3).f());
-    v_out[[0]] = m[[0,0]] * v_in[[0]] + m[[1,0]] * v_in[[1]] + m[[2,0]] * v_in[[2]] + m[[3,0]]; 
-    v_out[[1]] = m[[0,1]] * v_in[[0]] + m[[1,1]] * v_in[[1]] + m[[2,1]] * v_in[[2]] + m[[3,1]]; 
-    v_out[[2]] = m[[0,2]] * v_in[[0]] + m[[1,2]] * v_in[[1]] + m[[2,2]] * v_in[[2]] + m[[3,2]]; 
-    v_out        
 }
 
 pub fn mult_vec3_mat4(vec:vec3, mat:&Array2<f32>) -> vec3 {

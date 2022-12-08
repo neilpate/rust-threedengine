@@ -1,11 +1,10 @@
 mod threed;
 
-use ndarray::prelude::*;
 
 fn main() {
     println!("Hello, world!");
 
-    let obj = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string());
+    let _obj = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string());
 
     // match obj {
     //     Ok(obj) => println!("ok"),//print!("Object loaded: {obj:#?}"),
