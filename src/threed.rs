@@ -28,25 +28,20 @@ pub struct Camera {
     all_tol = "f32"
 )]
 #[derive(Debug, PartialEq, Clone, Copy)]
-
-// #[derive_float_eq(
-//     ulps_tol = "PointUlps", 
-//     ulps_tol_derive = "Clone, Copy, Debug, PartialEq",
-//     debug_ulps_diff = "PointDebugUlpsDiff",
-//     debug_ulps_diflf_derive = "Clone, Copy, Debug, PartialEq",
-//     all_tol = "f32"
-// )]
-
-
 struct AFQ {
     aspect_ratio : f32,
     fov : f32,
     q : f32,
 }
 
-
-//#[derive(Debug)]
-#[derive(Debug, Clone, Copy)]
+// #[derive_float_eq(
+//     ulps_tol = "PointUlps", 
+//     ulps_tol_derive = "Clone, Copy, Debug, PartialEq",
+//     debug_ulps_diff = "PointDebugUlpsDiff",
+//     debug_ulps_diff_derive = "Clone, Copy, Debug, PartialEq",
+//     all_tol = "f32"
+// )]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vert {
     pub x: f32,
     pub y: f32,
@@ -141,6 +136,9 @@ impl Object {
 
     }
 
+use Vert as vec3; 
+
+
 fn calc_afq(screen: &Screen, camera:&Camera) -> AFQ{
     let aspect_ratio = (screen.height as f32) / (screen.width as f32);
 
@@ -198,6 +196,13 @@ pub fn mult_vec_matrix(v_in:Array1<f32>, m:&Array2<f32>) -> Array1<f32> {
     v_out        
 }
 
+pub fn mult_vec3_mat4(vec:vec3, mat:&Array2<f32>) -> vec3 {
+    let x = mat[[0,0]] * vec.x + mat[[1,0]] * vec.y + mat[[2,0]] * vec.z + mat[[3,0]]; 
+    let y = mat[[0,1]] * vec.x + mat[[1,1]] * vec.y + mat[[2,1]] * vec.z + mat[[3,1]]; 
+    let z = mat[[0,2]] * vec.x + mat[[1,2]] * vec.y + mat[[2,2]] * vec.z + mat[[3,2]]; 
+    vec3 {x, y, z}       
+}
+
 #[test]
 fn test_create_y_rotation_matrix() {
     let expected = arr2(&[
@@ -215,11 +220,9 @@ fn test_create_y_rotation_matrix() {
     
 #[test]
 fn test_mult_vec_matrix_1() {
-    let expected = arr1(&[
-        52., 62., 72.,
-    ]);
+    let expected = vec3 {x: 52., y: 62., z: 72.};
 
-    let vec = array![2., 3., 4.];
+    let vec = vec3{ x: 2., y:  3., z: 4.};
 
     let matrix = arr2(&[
         [1., 2., 3., 0.],
@@ -228,18 +231,16 @@ fn test_mult_vec_matrix_1() {
         [10., 11., 12., 0.],
         ]);
         
-        let result = mult_vec_matrix(vec, &matrix );
+        let result = mult_vec3_mat4(vec, &matrix );
         
         assert_eq!(expected, result);
 } 
 
 #[test]
 fn test_mult_vec_matrix_2() {
-    let expected = arr1(&[
-        10.86, -13.2, 0.7,
-    ]);
+    let expected = vec3{ x: 10.86, y: -13.2, z: 0.7};
     
-    let vec = array![0.2, -1.3, 0.9];
+    let vec = vec3{ x: 0.2, y: -1.3, z: 0.9};
     
     let matrix = arr2(&[
         [-1.2, 2., 3., 0.],
@@ -248,10 +249,29 @@ fn test_mult_vec_matrix_2() {
         [10., 0.1, -0.2, 0.],
         ]);
         
-        let result = mult_vec_matrix(vec, &matrix );
+        let result = mult_vec3_mat4(vec, &matrix );
         
-        assert_float_eq!(expected.into_raw_vec(), result.into_raw_vec(), abs_all <= 0.0001);
+        assert_eq!(expected, result);
 } 
+
+#[test]
+fn test_mult_vec_matrix_3() {
+    let expected = vec3 { x: 10.86, y: -13.2, z: 0.7};
+    
+    let vec = vec3 { x: 0.2, y: -1.3, z: 0.9};
+    
+    let matrix = arr2(&[
+        [-1.2, 2., 3., 0.],
+        [4., 5., 6., 0.],
+        [7., -8., 9., 0.],     
+        [10., 0.1, -0.2, 0.],
+        ]);
+        
+        let result = mult_vec3_mat4(vec, &matrix );
+        
+      //  assert_float_eq!(expected, result, abs_all <= 0.0001);
+} 
+
 
 
 #[test]
