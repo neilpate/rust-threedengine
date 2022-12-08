@@ -181,10 +181,23 @@ pub fn create_y_rotation_matrix(angle_deg : f32) -> Array2<f32> {
     m        
 }
 
-#[test]
-fn test1() {
-    assert_eq!(1, 1);
+pub fn calc_trans_matrix(x:f32, y:f32,z:f32) -> Array2<f32> {
+    let mut tm = Array::eye(4);
+    tm[[3,0]] = x;
+    tm[[3,1]] = y;
+    tm[[3,2]] = z;
+    tm
+
 }
+
+pub fn mult_vec_matrix(v_in:Array1<f32>, m:&Array2<f32>) -> Array1<f32> {
+    let mut v_out = Array::<f32, _>::zeros((3).f());
+    v_out[[0]] = m[[0,0]] * v_in[[0]] + m[[1,0]] * v_in[[1]] + m[[2,0]] * v_in[[2]] + m[[3,0]]; 
+    v_out[[1]] = m[[0,1]] * v_in[[0]] + m[[1,1]] * v_in[[1]] + m[[2,1]] * v_in[[2]] + m[[3,1]]; 
+    v_out[[2]] = m[[0,2]] * v_in[[0]] + m[[1,2]] * v_in[[1]] + m[[2,2]] * v_in[[2]] + m[[3,2]]; 
+    v_out        
+}
+
 #[test]
 fn test_create_y_rotation_matrix() {
     let expected = arr2(&[
@@ -200,11 +213,45 @@ fn test_create_y_rotation_matrix() {
     //assert_abs_diff_eq!(expected, result);                                                                                            
 }
     
-    
-    
-                                                                                            //be able to do the assert, but leaving it for now
+#[test]
+fn test_mult_vec_matrix_1() {
+    let expected = arr1(&[
+        52., 62., 72.,
+    ]);
 
+    let vec = array![2., 3., 4.];
 
+    let matrix = arr2(&[
+        [1., 2., 3., 0.],
+        [4., 5., 6., 0.],
+        [7., 8., 9., 0.],     
+        [10., 11., 12., 0.],
+        ]);
+        
+        let result = mult_vec_matrix(vec, &matrix );
+        
+        assert_eq!(expected, result);
+} 
+
+#[test]
+fn test_mult_vec_matrix_2() {
+    let expected = arr1(&[
+        10.86, -13.2, 0.7,
+    ]);
+    
+    let vec = array![0.2, -1.3, 0.9];
+    
+    let matrix = arr2(&[
+        [-1.2, 2., 3., 0.],
+        [4., 5., 6., 0.],
+        [7., -8., 9., 0.],     
+        [10., 0.1, -0.2, 0.],
+        ]);
+        
+        let result = mult_vec_matrix(vec, &matrix );
+        
+        assert_float_eq!(expected.into_raw_vec(), result.into_raw_vec(), abs_all <= 0.0001);
+} 
 
 
 #[test]
@@ -224,7 +271,6 @@ fn test_create_projection_matrix_1() {
     assert_eq!(expected, result);
 }
 
-
 #[test]
 fn test_create_projection_matrix_2() {
     let expected = arr2(&[
@@ -242,8 +288,6 @@ fn test_create_projection_matrix_2() {
     assert_eq!(expected, result);
 }
 
-
-
 #[test]
 fn test_calc_afq(){
     let expected = AFQ { aspect_ratio : 0.75, fov : 1.73205, q : 1.0001};
@@ -255,21 +299,4 @@ fn test_calc_afq(){
 
   //  assert_eq!(expected, result);
   assert_float_eq!(expected, result, abs_all <= 0.0001);
-}
-
-pub fn calc_trans_matrix(x:f32, y:f32,z:f32) -> Array2<f32> {
-    let mut tm = Array::eye(4);
-    tm[[3,0]] = x;
-    tm[[3,1]] = y;
-    tm[[3,2]] = z;
-    tm
-
-}
-
-pub fn mult_vec_matrix(v_in:Array1<f32>, m:&Array2<f32>) -> Array1<f32> {
-    let mut v_out = Array::<f32, _>::zeros((3).f());
-    v_out[[0]] = m[[0,0]] * v_in[[0]] + m[[1,0]] * v_in[[1]] + m[[2,0]] * v_in[[2]] + m[[3,0]]; 
-    v_out[[1]] = m[[0,1]] * v_in[[0]] + m[[1,1]] * v_in[[1]] + m[[2,1]] * v_in[[2]] + m[[3,1]]; 
-    v_out[[2]] = m[[0,2]] * v_in[[0]] + m[[1,2]] * v_in[[1]] + m[[2,2]] * v_in[[2]] + m[[3,2]]; 
-    v_out        
 }
