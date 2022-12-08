@@ -5,6 +5,8 @@ use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
 
+use approx::assert_abs_diff_eq;
+
 use float_eq::{assert_float_eq, float_eq, derive_float_eq};
 
 pub struct Screen {
@@ -148,34 +150,62 @@ fn calc_afq(screen: &Screen, camera:&Camera) -> AFQ{
     AFQ {aspect_ratio, fov, q}
 }
 
-pub fn Create_Projection_Matrix(screen: Screen, camera:Camera) -> Array<f32, Ix2> {
+pub fn create_projection_matrix(screen: Screen, camera:Camera) -> Array<f32, Ix2> {
     
     let afq = calc_afq(&screen, &camera);
 
-    let mut pm = arr2(&[
+    let mut m = arr2(&[
         [0., 0., 0., 0.],
         [0., 0., 0., 0.],
         [0., 0., 0., 1.],
         [0., 0., 0., 0.],
     ]);
 
-    pm[[0,0]] = afq.aspect_ratio * afq.fov;
-    pm[[1,1]] = afq.fov;
-    pm[[2,2]] = afq.q;
-    pm[[3,2]] = -1.* afq.q * camera.near_plane;
+    m[[0,0]] = afq.aspect_ratio * afq.fov;
+    m[[1,1]] = afq.fov;
+    m[[2,2]] = afq.q;
+    m[[3,2]] = -1.* afq.q * camera.near_plane;
 
-    pm
+    m
 }
-pub fn calc_view_matrix() -> Array2<f32> {
-    let mut vm = Array::<f32, _>::eye(4);
-    vm[[3,2]] = 10.;
-    vm        
+pub fn create_y_rotation_matrix(angle_deg : f32) -> Array2<f32> {
+    let mut m = Array::<f32, _>::eye(4);
+   
+    let angle_rad = angle_deg.to_radians();
+    let (sin, cos)  = angle_rad.sin_cos();
+   
+    m[[0,0]] = cos;
+    m[[0,2]] = sin;
+    m[[2,0]] = -sin;
+    m[[2,2]] = cos;
+    m        
 }
 
 #[test]
 fn test1() {
     assert_eq!(1, 1);
 }
+#[test]
+fn test_create_y_rotation_matrix() {
+    let expected = arr2(&[
+        [0.93969262, 0., 0.34202015, 0.],
+        [0., 1., 0., 0.],
+        [-0.34202015, 0., 0.93969262, 0.],
+        [0., 0., 0., 1.],
+    ]);
+
+    let result = create_y_rotation_matrix(20.);
+
+    assert_float_eq!(expected.into_raw_vec(), result.into_raw_vec(), abs_all <= 0.0001);    //Don't like this conversion to vec just to
+    //assert_abs_diff_eq!(expected, result);                                                                                            
+}
+    
+    
+    
+                                                                                            //be able to do the assert, but leaving it for now
+
+
+
 
 #[test]
 fn test_create_projection_matrix_1() {
@@ -189,7 +219,7 @@ fn test_create_projection_matrix_1() {
     let screen = Screen { width : 800, height :600};
     let camera = Camera {fov: 60., near_plane : 0.1, far_plane : 1000.};
 
-    let result = Create_Projection_Matrix(screen, camera);
+    let result = create_projection_matrix(screen, camera);
 
     assert_eq!(expected, result);
 }
@@ -207,7 +237,7 @@ fn test_create_projection_matrix_2() {
     let screen = Screen { width : 900, height :450};
     let camera = Camera {fov: 75., near_plane : 2., far_plane : 2000.};
 
-    let result = Create_Projection_Matrix(screen, camera);
+    let result = create_projection_matrix(screen, camera);
 
     assert_eq!(expected, result);
 }

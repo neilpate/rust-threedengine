@@ -15,7 +15,7 @@ fn main() {
     let screen = threed::Screen { width : 800, height :600};
     let camera = threed::Camera {fov: 60., near_plane : 0.1, far_plane : 1000.};
 
-    let pm = threed::Create_Projection_Matrix(screen, camera);
+    let pm = threed::create_projection_matrix(screen, camera);
     println!("Projection matrix:");
     println!("{}", pm);
 
