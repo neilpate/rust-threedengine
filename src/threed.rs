@@ -2,7 +2,6 @@ use std::fs;
 use std::io;
 use std::ops::Add;
 
-use approx::assert_abs_diff_eq;
 use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
@@ -148,7 +147,7 @@ impl Object {
 
     }
 
-use Vert as vec3; 
+pub use Vert as vec3; 
 
 
 fn calc_afq(screen: &Screen, camera:&Camera) -> AFQ{
@@ -213,9 +212,14 @@ pub fn calc_view_matrix(cam_rotation : f32, cam_pos : vec3) -> Array2<f32> {
 
     vm
 
-
-
 } 
+
+fn point_at(cam_pos : vec3, target : vec3, up : vec3) -> Array2<f32> {
+    let mut vm = Array::eye(4);
+    vm[[0,0]] - 1.;
+    vm
+
+}
 
 pub fn mult_vec3_mat4(vec:vec3, mat:&Array2<f32>) -> vec3 {
     let x = mat[[0,0]] * vec.x + mat[[1,0]] * vec.y + mat[[2,0]] * vec.z + mat[[3,0]]; 
@@ -223,6 +227,9 @@ pub fn mult_vec3_mat4(vec:vec3, mat:&Array2<f32>) -> vec3 {
     let z = mat[[0,2]] * vec.x + mat[[1,2]] * vec.y + mat[[2,2]] * vec.z + mat[[3,2]]; 
     vec3 {x, y, z}       
 }
+
+
+
 
 #[test]
 fn test_create_y_rotation_matrix() {

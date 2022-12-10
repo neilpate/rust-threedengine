@@ -14,9 +14,13 @@ fn main() {
     let screen = threed::Screen { width : 800, height :600};
     let camera = threed::Camera {fov: 60., near_plane : 0.1, far_plane : 1000.};
 
-    let pm = threed::create_projection_matrix(screen, camera);
+    let proj_mat = threed::create_projection_matrix(screen, camera);
     println!("Projection matrix:");
-    println!("{}", pm);
+    println!("{}", proj_mat);
+
+    let cam_pos = threed::vec3 {x: 0., y: 5., z: -20. };
+
+    let _view_mat = threed::calc_view_matrix(0., cam_pos);
 
 
   //   let vm = threed::calc_view_matrix();
