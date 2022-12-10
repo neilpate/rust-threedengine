@@ -6,22 +6,21 @@ use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
 
-
-use float_eq::{assert_float_eq, float_eq, derive_float_eq};
+use float_eq::{assert_float_eq, derive_float_eq, float_eq};
 
 pub struct Screen {
-     pub width : i32,
-     pub height : i32,
+    pub width: i32,
+    pub height: i32,
 }
 
 pub struct Camera {
-    pub fov : f32,
-    pub near_plane : f32,
-    pub far_plane : f32,
+    pub fov: f32,
+    pub near_plane: f32,
+    pub far_plane: f32,
 }
 
 #[derive_float_eq(
-    ulps_tol = "AFQUlps", 
+    ulps_tol = "AFQUlps",
     ulps_tol_derive = "Clone, Copy, Debug, PartialEq",
     debug_ulps_diff = "AFQDebugUlpsDiff",
     debug_ulps_diff_derive = "Clone, Copy, Debug, PartialEq",
@@ -29,13 +28,13 @@ pub struct Camera {
 )]
 #[derive(Debug, PartialEq, Clone, Copy)]
 struct AFQ {
-    aspect_ratio : f32,
-    fov : f32,
-    q : f32,
+    aspect_ratio: f32,
+    fov: f32,
+    q: f32,
 }
 
 #[derive_float_eq(
-    ulps_tol = "VertUlps", 
+    ulps_tol = "VertUlps",
     ulps_tol_derive = "Clone, Copy, Debug, PartialEq",
     debug_ulps_diff = "VertDebugUlpsDiff",
     debug_ulps_diff_derive = "Clone, Copy, Debug, PartialEq",
@@ -45,7 +44,7 @@ struct AFQ {
 pub struct Vert {
     pub x: f32,
     pub y: f32,
-    pub z: f32
+    pub z: f32,
 }
 
 impl Vert {
@@ -73,22 +72,23 @@ impl Add for Vert {
     type Output = Vert;
 
     fn add(self, other: Vert) -> Vert {
-        Vert {  x : self.x + other.x,
-                y : self.y + other.y, 
-                z: self.z + other.z}
+        Vert {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
     }
-
 }
 
 #[derive(Debug)]
 pub struct Tri {
     pub v1: Vert,
     pub v2: Vert,
-    pub v3: Vert
+    pub v3: Vert,
 }
 #[derive(Debug)]
 pub struct Object {
-    pub tris : Vec<Tri>
+    pub tris: Vec<Tri>,
 }
 
 impl Object {
@@ -143,24 +143,24 @@ impl Object {
 
         Ok(Object { tris: mesh })
     }
-    
-
-    }
-
-pub use Vert as vec3; 
-
-
-fn calc_afq(screen: &Screen, camera:&Camera) -> AFQ{
-    let aspect_ratio = (screen.height as f32) / (screen.width as f32);
-
-    let fov = 1./((camera.fov / 2.).to_radians().tan());
-
-    let q = camera.far_plane / (camera.far_plane - camera.near_plane);
-    AFQ {aspect_ratio, fov, q}
 }
 
-pub fn create_projection_matrix(screen: Screen, camera:Camera) -> Array<f32, Ix2> {
-    
+pub use Vert as vec3;
+
+fn calc_afq(screen: &Screen, camera: &Camera) -> AFQ {
+    let aspect_ratio = (screen.height as f32) / (screen.width as f32);
+
+    let fov = 1. / ((camera.fov / 2.).to_radians().tan());
+
+    let q = camera.far_plane / (camera.far_plane - camera.near_plane);
+    AFQ {
+        aspect_ratio,
+        fov,
+        q,
+    }
+}
+
+pub fn create_projection_matrix(screen: Screen, camera: Camera) -> Array<f32, Ix2> {
     let afq = calc_afq(&screen, &camera);
 
     let mut m = arr2(&[
@@ -170,66 +170,90 @@ pub fn create_projection_matrix(screen: Screen, camera:Camera) -> Array<f32, Ix2
         [0., 0., 0., 0.],
     ]);
 
-    m[[0,0]] = afq.aspect_ratio * afq.fov;
-    m[[1,1]] = afq.fov;
-    m[[2,2]] = afq.q;
-    m[[3,2]] = -1.* afq.q * camera.near_plane;
+    m[[0, 0]] = afq.aspect_ratio * afq.fov;
+    m[[1, 1]] = afq.fov;
+    m[[2, 2]] = afq.q;
+    m[[3, 2]] = -1. * afq.q * camera.near_plane;
 
     m
 }
-pub fn create_y_rotation_matrix(angle_deg : f32) -> Array2<f32> {
+pub fn create_y_rotation_matrix(angle_deg: f32) -> Array2<f32> {
     let mut m = Array::<f32, _>::eye(4);
-   
+
     let angle_rad = angle_deg.to_radians();
-    let (sin, cos)  = angle_rad.sin_cos();
-   
-    m[[0,0]] = cos;
-    m[[0,2]] = sin;
-    m[[2,0]] = -sin;
-    m[[2,2]] = cos;
-    m        
+    let (sin, cos) = angle_rad.sin_cos();
+
+    m[[0, 0]] = cos;
+    m[[0, 2]] = sin;
+    m[[2, 0]] = -sin;
+    m[[2, 2]] = cos;
+    m
 }
 
-pub fn calc_trans_matrix(x:f32, y:f32,z:f32) -> Array2<f32> {
+pub fn calc_trans_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
     let mut tm = Array::eye(4);
-    tm[[3,0]] = x;
-    tm[[3,1]] = y;
-    tm[[3,2]] = z;
+    tm[[3, 0]] = x;
+    tm[[3, 1]] = y;
+    tm[[3, 2]] = z;
     tm
-
 }
 
-pub fn calc_view_matrix(cam_rotation : f32, cam_pos : vec3) -> Array2<f32> {
+pub fn calc_view_matrix(cam_rotation: f32, cam_pos: vec3) -> Array2<f32> {
     let mut vm = Array::eye(4);
-    vm[[0,0]] - 1.;
-    
+    vm[[0, 0]] - 1.;
+
     let rot_mat = create_y_rotation_matrix(cam_rotation);
-    
-    let target = vec3 {x: 0., y:0., z: 1.};
+
+    let target = vec3 {
+        x: 0.,
+        y: 0.,
+        z: 1.,
+    };
     let mut target_vert = mult_vec3_mat4(target, &rot_mat);
-    
+
     target_vert = target_vert + cam_pos;
 
     vm
+}
 
-} 
-
-fn point_at(cam_pos : vec3, target : vec3, up : vec3) -> Array2<f32> {
+fn point_at(cam_pos: vec3, target: vec3, up: vec3) -> Array2<f32> {
     let mut vm = Array::eye(4);
-    vm[[0,0]] - 1.;
+    vm[[0, 0]] - 1.;
     vm
-
 }
 
-pub fn mult_vec3_mat4(vec:vec3, mat:&Array2<f32>) -> vec3 {
-    let x = mat[[0,0]] * vec.x + mat[[1,0]] * vec.y + mat[[2,0]] * vec.z + mat[[3,0]]; 
-    let y = mat[[0,1]] * vec.x + mat[[1,1]] * vec.y + mat[[2,1]] * vec.z + mat[[3,1]]; 
-    let z = mat[[0,2]] * vec.x + mat[[1,2]] * vec.y + mat[[2,2]] * vec.z + mat[[3,2]]; 
-    vec3 {x, y, z}       
+pub fn mult_vec3_mat4(vec: vec3, mat: &Array2<f32>) -> vec3 {
+    let x = mat[[0, 0]] * vec.x + mat[[1, 0]] * vec.y + mat[[2, 0]] * vec.z + mat[[3, 0]];
+    let y = mat[[0, 1]] * vec.x + mat[[1, 1]] * vec.y + mat[[2, 1]] * vec.z + mat[[3, 1]];
+    let z = mat[[0, 2]] * vec.x + mat[[1, 2]] * vec.y + mat[[2, 2]] * vec.z + mat[[3, 2]];
+    vec3 { x, y, z }
 }
 
+#[test]
+fn test_point_at() {
+    let expected = vec3 {
+        x: 52.,
+        y: 62.,
+        z: 72.,
+    };
 
+    let vec = vec3 {
+        x: 2.,
+        y: 3.,
+        z: 4.,
+    };
 
+    let matrix = arr2(&[
+        [1., 2., 3., 0.],
+        [4., 5., 6., 0.],
+        [7., 8., 9., 0.],
+        [10., 11., 12., 0.],
+    ]);
+
+    let result = mult_vec3_mat4(vec, &matrix);
+
+    assert_float_eq!(expected, result, abs_all <= 0.0001);
+}
 
 #[test]
 fn test_create_y_rotation_matrix() {
@@ -242,65 +266,91 @@ fn test_create_y_rotation_matrix() {
 
     let result = create_y_rotation_matrix(20.);
 
-    assert_float_eq!(expected.into_raw_vec(), result.into_raw_vec(), abs_all <= 0.0001);    //Don't like this conversion to vec just to
-    //assert_abs_diff_eq!(expected, result);                                                                                            
+    assert_float_eq!(
+        expected.into_raw_vec(),
+        result.into_raw_vec(),
+        abs_all <= 0.0001
+    ); //Don't like this conversion to vec just to
+       //assert_abs_diff_eq!(expected, result);
 }
-    
+
 #[test]
 fn test_mult_vec_matrix_1() {
-    let expected = vec3 {x: 52., y: 62., z: 72.};
-    
-    let vec = vec3{ x: 2., y:  3., z: 4.};
-    
+    let expected = vec3 {
+        x: 52.,
+        y: 62.,
+        z: 72.,
+    };
+
+    let vec = vec3 {
+        x: 2.,
+        y: 3.,
+        z: 4.,
+    };
+
     let matrix = arr2(&[
         [1., 2., 3., 0.],
         [4., 5., 6., 0.],
-        [7., 8., 9., 0.],     
+        [7., 8., 9., 0.],
         [10., 11., 12., 0.],
-        ]);
-        
-        let result = mult_vec3_mat4(vec, &matrix );
-        
-        assert_float_eq!(expected, result, abs_all <= 0.0001);
-    } 
+    ]);
+
+    let result = mult_vec3_mat4(vec, &matrix);
+
+    assert_float_eq!(expected, result, abs_all <= 0.0001);
+}
 
 #[test]
 fn test_mult_vec_matrix_2() {
-    let expected = vec3{ x: 10.86, y: -13.2, z: 0.7};
-    
-    let vec = vec3{ x: 0.2, y: -1.3, z: 0.9};
-    
+    let expected = vec3 {
+        x: 10.86,
+        y: -13.2,
+        z: 0.7,
+    };
+
+    let vec = vec3 {
+        x: 0.2,
+        y: -1.3,
+        z: 0.9,
+    };
+
     let matrix = arr2(&[
         [-1.2, 2., 3., 0.],
         [4., 5., 6., 0.],
-        [7., -8., 9., 0.],     
+        [7., -8., 9., 0.],
         [10., 0.1, -0.2, 0.],
-        ]);
-        
-        let result = mult_vec3_mat4(vec, &matrix );
-        
-        assert_float_eq!(expected, result, abs_all <= 0.0001); 
-    } 
-    
-    #[test]
-    fn test_mult_vec_matrix_3() {
-        let expected = vec3 { x: 10.86, y: -13.2, z: 0.7};
-        
-        let vec = vec3 { x: 0.2, y: -1.3, z: 0.9};
-        
-        let matrix = arr2(&[
-            [-1.2, 2., 3., 0.],
-            [4., 5., 6., 0.],
-            [7., -8., 9., 0.],     
-            [10., 0.1, -0.2, 0.],
-        ]);
-        
-        let result = mult_vec3_mat4(vec, &matrix );
-        
-        assert_float_eq!(expected, result, abs_all <= 0.0001);
-} 
+    ]);
 
+    let result = mult_vec3_mat4(vec, &matrix);
 
+    assert_float_eq!(expected, result, abs_all <= 0.0001);
+}
+
+#[test]
+fn test_mult_vec_matrix_3() {
+    let expected = vec3 {
+        x: 10.86,
+        y: -13.2,
+        z: 0.7,
+    };
+
+    let vec = vec3 {
+        x: 0.2,
+        y: -1.3,
+        z: 0.9,
+    };
+
+    let matrix = arr2(&[
+        [-1.2, 2., 3., 0.],
+        [4., 5., 6., 0.],
+        [7., -8., 9., 0.],
+        [10., 0.1, -0.2, 0.],
+    ]);
+
+    let result = mult_vec3_mat4(vec, &matrix);
+
+    assert_float_eq!(expected, result, abs_all <= 0.0001);
+}
 
 #[test]
 fn test_create_projection_matrix_1() {
@@ -311,8 +361,15 @@ fn test_create_projection_matrix_1() {
         [0., 0., -0.10001, 0.],
     ]);
 
-    let screen = Screen { width : 800, height :600};
-    let camera = Camera {fov: 60., near_plane : 0.1, far_plane : 1000.};
+    let screen = Screen {
+        width: 800,
+        height: 600,
+    };
+    let camera = Camera {
+        fov: 60.,
+        near_plane: 0.1,
+        far_plane: 1000.,
+    };
 
     let result = create_projection_matrix(screen, camera);
 
@@ -328,8 +385,15 @@ fn test_create_projection_matrix_2() {
         [0., 0., -2.002002, 0.],
     ]);
 
-    let screen = Screen { width : 900, height :450};
-    let camera = Camera {fov: 75., near_plane : 2., far_plane : 2000.};
+    let screen = Screen {
+        width: 900,
+        height: 450,
+    };
+    let camera = Camera {
+        fov: 75.,
+        near_plane: 2.,
+        far_plane: 2000.,
+    };
 
     let result = create_projection_matrix(screen, camera);
 
@@ -337,14 +401,25 @@ fn test_create_projection_matrix_2() {
 }
 
 #[test]
-fn test_calc_afq(){
-    let expected = AFQ { aspect_ratio : 0.75, fov : 1.73205, q : 1.0001};
+fn test_calc_afq() {
+    let expected = AFQ {
+        aspect_ratio: 0.75,
+        fov: 1.73205,
+        q: 1.0001,
+    };
 
-    let screen = Screen { width : 800, height :600};
-    let camera = Camera {fov: 60., near_plane : 0.1, far_plane : 1000.};
+    let screen = Screen {
+        width: 800,
+        height: 600,
+    };
+    let camera = Camera {
+        fov: 60.,
+        near_plane: 0.1,
+        far_plane: 1000.,
+    };
 
     let result = calc_afq(&screen, &camera);
 
-  //  assert_eq!(expected, result);
-  assert_float_eq!(expected, result, abs_all <= 0.0001);
+    //  assert_eq!(expected, result);
+    assert_float_eq!(expected, result, abs_all <= 0.0001);
 }
