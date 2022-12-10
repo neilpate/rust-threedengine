@@ -1,5 +1,6 @@
 use std::fs;
 use std::io;
+use std::ops::Add;
 
 use approx::assert_abs_diff_eq;
 use ndarray::arr2;
@@ -67,6 +68,17 @@ impl Vert {
             return None;
         }
     }
+}
+
+impl Add for Vert {
+    type Output = Vert;
+
+    fn add(self, other: Vert) -> Vert {
+        Vert {  x : self.x + other.x,
+                y : self.y + other.y, 
+                z: self.z + other.z}
+    }
+
 }
 
 #[derive(Debug)]
@@ -187,6 +199,23 @@ pub fn calc_trans_matrix(x:f32, y:f32,z:f32) -> Array2<f32> {
     tm
 
 }
+
+pub fn calc_view_matrix(cam_rotation : f32, cam_pos : vec3) -> Array2<f32> {
+    let mut vm = Array::eye(4);
+    vm[[0,0]] - 1.;
+    
+    let rot_mat = create_y_rotation_matrix(cam_rotation);
+    
+    let target = vec3 {x: 0., y:0., z: 1.};
+    let mut target_vert = mult_vec3_mat4(target, &rot_mat);
+    
+    target_vert = target_vert + cam_pos;
+
+    vm
+
+
+
+} 
 
 pub fn mult_vec3_mat4(vec:vec3, mat:&Array2<f32>) -> vec3 {
     let x = mat[[0,0]] * vec.x + mat[[1,0]] * vec.y + mat[[2,0]] * vec.z + mat[[3,0]]; 
