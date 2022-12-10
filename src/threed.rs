@@ -1,6 +1,7 @@
 use std::fs;
 use std::io;
 
+use approx::assert_abs_diff_eq;
 use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
@@ -20,9 +21,9 @@ pub struct Camera {
 }
 
 #[derive_float_eq(
-    ulps_tol = "PointUlps", 
+    ulps_tol = "AFQUlps", 
     ulps_tol_derive = "Clone, Copy, Debug, PartialEq",
-    debug_ulps_diff = "PointDebugUlpsDiff",
+    debug_ulps_diff = "AFQDebugUlpsDiff",
     debug_ulps_diff_derive = "Clone, Copy, Debug, PartialEq",
     all_tol = "f32"
 )]
@@ -33,13 +34,13 @@ struct AFQ {
     q : f32,
 }
 
-// #[derive_float_eq(
-//     ulps_tol = "PointUlps", 
-//     ulps_tol_derive = "Clone, Copy, Debug, PartialEq",
-//     debug_ulps_diff = "PointDebugUlpsDiff",
-//     debug_ulps_diff_derive = "Clone, Copy, Debug, PartialEq",
-//     all_tol = "f32"
-// )]
+#[derive_float_eq(
+    ulps_tol = "VertUlps", 
+    ulps_tol_derive = "Clone, Copy, Debug, PartialEq",
+    debug_ulps_diff = "VertDebugUlpsDiff",
+    debug_ulps_diff_derive = "Clone, Copy, Debug, PartialEq",
+    all_tol = "f32"
+)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vert {
     pub x: f32,
@@ -197,7 +198,7 @@ pub fn mult_vec3_mat4(vec:vec3, mat:&Array2<f32>) -> vec3 {
 #[test]
 fn test_create_y_rotation_matrix() {
     let expected = arr2(&[
-        [0.93969262, 0., 0.34202015, 0.],
+        [0.93969262f32, 0., 0.34202015, 0.],
         [0., 1., 0., 0.],
         [-0.34202015, 0., 0.93969262, 0.],
         [0., 0., 0., 1.],
@@ -212,9 +213,9 @@ fn test_create_y_rotation_matrix() {
 #[test]
 fn test_mult_vec_matrix_1() {
     let expected = vec3 {x: 52., y: 62., z: 72.};
-
+    
     let vec = vec3{ x: 2., y:  3., z: 4.};
-
+    
     let matrix = arr2(&[
         [1., 2., 3., 0.],
         [4., 5., 6., 0.],
@@ -224,8 +225,8 @@ fn test_mult_vec_matrix_1() {
         
         let result = mult_vec3_mat4(vec, &matrix );
         
-        assert_eq!(expected, result);
-} 
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
+    } 
 
 #[test]
 fn test_mult_vec_matrix_2() {
@@ -242,25 +243,25 @@ fn test_mult_vec_matrix_2() {
         
         let result = mult_vec3_mat4(vec, &matrix );
         
-        assert_eq!(expected, result);
-} 
-
-#[test]
-fn test_mult_vec_matrix_3() {
-    let expected = vec3 { x: 10.86, y: -13.2, z: 0.7};
+        assert_float_eq!(expected, result, abs_all <= 0.0001); 
+    } 
     
-    let vec = vec3 { x: 0.2, y: -1.3, z: 0.9};
-    
-    let matrix = arr2(&[
-        [-1.2, 2., 3., 0.],
-        [4., 5., 6., 0.],
-        [7., -8., 9., 0.],     
-        [10., 0.1, -0.2, 0.],
+    #[test]
+    fn test_mult_vec_matrix_3() {
+        let expected = vec3 { x: 10.86, y: -13.2, z: 0.7};
+        
+        let vec = vec3 { x: 0.2, y: -1.3, z: 0.9};
+        
+        let matrix = arr2(&[
+            [-1.2, 2., 3., 0.],
+            [4., 5., 6., 0.],
+            [7., -8., 9., 0.],     
+            [10., 0.1, -0.2, 0.],
         ]);
         
         let result = mult_vec3_mat4(vec, &matrix );
         
-      //  assert_float_eq!(expected, result, abs_all <= 0.0001);
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
 } 
 
 
