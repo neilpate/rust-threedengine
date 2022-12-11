@@ -189,6 +189,20 @@ pub fn create_projection_matrix(screen: Screen, camera: Camera) -> Array<f32, Ix
 
     m
 }
+
+pub fn create_x_rotation_matrix(angle_deg: f32) -> Array2<f32> {
+    let mut m = Array::<f32, _>::eye(4);
+
+    let angle_rad = angle_deg.to_radians();
+    let (sin, cos) = angle_rad.sin_cos();
+
+    m[[1, 1]] = cos;
+    m[[1, 2]] = sin;
+    m[[2, 1]] = -sin;
+    m[[2, 2]] = cos;
+    m
+}
+
 pub fn create_y_rotation_matrix(angle_deg: f32) -> Array2<f32> {
     let mut m = Array::<f32, _>::eye(4);
 
@@ -202,7 +216,20 @@ pub fn create_y_rotation_matrix(angle_deg: f32) -> Array2<f32> {
     m
 }
 
-pub fn _calc_trans_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
+pub fn create_z_rotation_matrix(angle_deg: f32) -> Array2<f32> {
+    let mut m = Array::<f32, _>::eye(4);
+
+    let angle_rad = angle_deg.to_radians();
+    let (sin, cos) = angle_rad.sin_cos();
+
+    m[[0, 0]] = cos;
+    m[[0, 1]] = sin;
+    m[[1, 0]] = -sin;
+    m[[1, 1]] = cos;
+    m
+}
+
+pub fn create_trans_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
     let mut tm = Array::eye(4);
     tm[[3, 0]] = x;
     tm[[3, 1]] = y;
@@ -210,7 +237,7 @@ pub fn _calc_trans_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
     tm
 }
 
-pub fn calc_view_matrix(cam_rotation: f32, cam_pos: vec3) -> Array2<f32> {
+pub fn create_view_matrix(cam_rotation: f32, cam_pos: vec3) -> Array2<f32> {
     let rot_mat = create_y_rotation_matrix(cam_rotation);
 
     let target = vec3 {
@@ -364,7 +391,7 @@ fn test_quick_invert() {
 }
 
 #[test]
-fn test_calc_view() {
+fn test_create_view() {
     let expected = arr2(&[
         [0.766044, 0., -0.642788, 0.],
         [0., 1., 0., 0.],
@@ -380,7 +407,7 @@ fn test_calc_view() {
 
     let cam_rotation = 40.;
 
-    let result = calc_view_matrix(cam_rotation, cam_pos);
+    let result = create_view_matrix(cam_rotation, cam_pos);
 
     assert_float_eq!(
         expected.into_raw_vec(),
@@ -470,6 +497,24 @@ fn test_normalise_vec() {
 }
 
 #[test]
+fn test_create_x_rotation_matrix() {
+    let expected = arr2(&[
+        [1f32, 0., 0., 0.],
+        [0., 0.93969262f32, 0.342020150, 0.],
+        [0., -0.34202015, 0.93969262, 0.],
+        [0., 0., 0., 1.],
+    ]);
+
+    let result = create_x_rotation_matrix(20.);
+
+    assert_float_eq!(
+        expected.into_raw_vec(),
+        result.into_raw_vec(),
+        abs_all <= 0.0001
+    );
+}
+
+#[test]
 fn test_create_y_rotation_matrix() {
     let expected = arr2(&[
         [0.93969262f32, 0., 0.34202015, 0.],
@@ -484,8 +529,25 @@ fn test_create_y_rotation_matrix() {
         expected.into_raw_vec(),
         result.into_raw_vec(),
         abs_all <= 0.0001
-    ); //Don't like this conversion to vec just to
-       //assert_abs_diff_eq!(expected, result);
+    );
+}
+
+#[test]
+fn test_create_z_rotation_matrix() {
+    let expected = arr2(&[
+        [0.93969262f32, 0.34202015, 0., 0.],
+        [-0.34202015, 0.93969262, 0., 0.],
+        [0., 0., 1., 0.],
+        [0., 0., 0., 1.],
+    ]);
+
+    let result = create_z_rotation_matrix(20.);
+
+    assert_float_eq!(
+        expected.into_raw_vec(),
+        result.into_raw_vec(),
+        abs_all <= 0.0001
+    );
 }
 
 #[test]
