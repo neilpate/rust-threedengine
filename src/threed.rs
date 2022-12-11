@@ -202,7 +202,7 @@ pub fn create_y_rotation_matrix(angle_deg: f32) -> Array2<f32> {
     m
 }
 
-pub fn calc_trans_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
+pub fn _calc_trans_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
     let mut tm = Array::eye(4);
     tm[[3, 0]] = x;
     tm[[3, 1]] = y;
@@ -211,9 +211,6 @@ pub fn calc_trans_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
 }
 
 pub fn calc_view_matrix(cam_rotation: f32, cam_pos: vec3) -> Array2<f32> {
-    let mut vm = Array::eye(4);
-    vm[[0, 0]] - 1.;
-
     let rot_mat = create_y_rotation_matrix(cam_rotation);
 
     let target = vec3 {
@@ -225,6 +222,15 @@ pub fn calc_view_matrix(cam_rotation: f32, cam_pos: vec3) -> Array2<f32> {
 
     target_vert = target_vert + cam_pos;
 
+    let up = vec3 {
+        x: 0.,
+        y: 1.,
+        z: 0.,
+    };
+
+    let point_at = point_at(cam_pos, target_vert, up);
+
+    let vm = quick_invert_mat4(point_at);
     vm
 }
 
@@ -277,12 +283,41 @@ pub fn mult_vec3_mat4(vec: vec3, mat: &Array2<f32>) -> vec3 {
     vec3 { x, y, z }
 }
 
+pub fn quick_invert_mat4(mat: Array2<f32>) -> Array2<f32> {
+    let mut out: ArrayBase<ndarray::OwnedRepr<f32>, Dim<[usize; 2]>> = Array::eye(4);
+
+    out[[0, 0]] = mat[[0, 0]];
+    out[[0, 1]] = mat[[1, 0]];
+    out[[0, 2]] = mat[[2, 0]];
+    out[[0, 3]] = 0.;
+
+    out[[1, 0]] = mat[[0, 1]];
+    out[[1, 1]] = mat[[1, 1]];
+    out[[1, 2]] = mat[[2, 1]];
+    out[[1, 3]] = 0.;
+
+    out[[2, 0]] = mat[[0, 2]];
+    out[[2, 1]] = mat[[1, 2]];
+    out[[2, 2]] = mat[[2, 2]];
+    out[[2, 3]] = 0.;
+
+    out[[3, 0]] =
+        -(mat[[3, 0]] * out[[0, 0]] + mat[[3, 1]] * out[[1, 0]] + mat[[3, 2]] * out[[2, 0]]);
+    out[[3, 1]] =
+        -(mat[[3, 0]] * out[[0, 1]] + mat[[3, 1]] * out[[1, 1]] + mat[[3, 2]] * out[[2, 1]]);
+    out[[3, 2]] =
+        -(mat[[3, 0]] * out[[0, 2]] + mat[[3, 1]] * out[[1, 2]] + mat[[3, 2]] * out[[2, 2]]);
+    out[[3, 3]] = 1.;
+
+    out
+}
+
 fn normalise_vec(vec: vec3) -> vec3 {
     let x = vec.x.powf(2.);
     let y = vec.y.powf(2.);
     let z = vec.z.powf(2.);
 
-    let mut xyz = (x + y + z).sqrt();
+    let xyz = (x + y + z).sqrt();
 
     vec3 {
         x: vec.x / xyz,
@@ -301,6 +336,57 @@ fn cross_product(v1: vec3, v2: vec3) -> vec3 {
     let z = v1.x * v2.y - v1.y * v2.x;
 
     vec3 { x, y, z }
+}
+
+#[test]
+fn test_quick_invert() {
+    let expected = arr2(&[
+        [1., 4., 7., 0.],
+        [2., 5., 8., 0.],
+        [3., 6., 9., 0.],
+        [14., 32., 50., 1.],
+    ]);
+
+    let in_mat = arr2(&[
+        [1., 2., 3., 0.],
+        [4., 5., 6., 0.],
+        [7., 8., 9., 0.],
+        [-1., -2., -3., 1.],
+    ]);
+
+    let result = quick_invert_mat4(in_mat);
+
+    assert_float_eq!(
+        expected.into_raw_vec(),
+        result.into_raw_vec(),
+        abs_all <= 0.0001
+    );
+}
+
+#[test]
+fn test_calc_view() {
+    let expected = arr2(&[
+        [0.766044, 0., -0.642788, 0.],
+        [0., 1., 0., 0.],
+        [0.642788, 0., 0.766044, 0.],
+        [-4.10324, -3., -1.7786, 1.],
+    ]);
+
+    let cam_pos = vec3 {
+        x: 2.,
+        y: 3.,
+        z: 4.,
+    };
+
+    let cam_rotation = 40.;
+
+    let result = calc_view_matrix(cam_rotation, cam_pos);
+
+    assert_float_eq!(
+        expected.into_raw_vec(),
+        result.into_raw_vec(),
+        abs_all <= 0.0001
+    );
 }
 
 #[test]
@@ -378,7 +464,7 @@ fn test_normalise_vec() {
         z: 72.,
     };
 
-    let result = normalise_vec(expected);
+    let result = normalise_vec(input);
 
     assert_float_eq!(expected, result, abs_all <= 0.0001);
 }
@@ -548,6 +634,5 @@ fn test_calc_afq() {
 
     let result = calc_afq(&screen, &camera);
 
-    //  assert_eq!(expected, result);
     assert_float_eq!(expected, result, abs_all <= 0.0001);
 }
