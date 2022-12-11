@@ -30,22 +30,15 @@ fn main() {
         z: -20.,
     };
 
-    let _view_mat = threed::calc_view_matrix(0., cam_pos);
+    let view_mat = threed::create_view_matrix(0., cam_pos);
+    println!("View matrix:");
+    println!("{}", view_mat);
 
-    //   let vm = threed::calc_view_matrix();
-    // //  println!("{}", vm);
-
-    //   let tm = threed::calc_trans_matrix(0.0, 0.0, 0.0);
-    //   println!("Translation matrix:{}", tm);
-
-    //   let pt = array![
-    //       5.,6.,7.,
-    //   ];
-    //  // println!("{}", pt);
-
-    //   let tt = threed::mult_vec_matrix(pt, &tm);
-
-    // println!("{}", tt);
+    //Main loop
+    //Calculate x rot matrix
+    //Calculate y rot matrix
+    //Calculate z rot matrix
+    //Calculate xyz trans matrix
 
     //Loop over all the triangles in the object
     //Do the mult_vec_matrix with the transform matrix
