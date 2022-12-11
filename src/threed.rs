@@ -229,7 +229,7 @@ pub fn create_z_rotation_matrix(angle_deg: f32) -> Array2<f32> {
     m
 }
 
-pub fn create_trans_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
+pub fn create_translation_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
     let mut tm = Array::eye(4);
     tm[[3, 0]] = x;
     tm[[3, 1]] = y;
@@ -391,7 +391,25 @@ fn test_quick_invert() {
 }
 
 #[test]
-fn test_create_view() {
+fn test_create_translation_matrix() {
+    let expected = arr2(&[
+        [1., 0., 0., 0.],
+        [0., 1., 0., 0.],
+        [0., 0., 1., 0.],
+        [1., 2., 3., 1.],
+    ]);
+
+    let result = create_translation_matrix(1., 2., 3.);
+
+    assert_float_eq!(
+        expected.into_raw_vec(),
+        result.into_raw_vec(),
+        abs_all <= 0.0001
+    );
+}
+
+#[test]
+fn test_create_view_matrix() {
     let expected = arr2(&[
         [0.766044, 0., -0.642788, 0.],
         [0., 1., 0., 0.],
