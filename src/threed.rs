@@ -1,6 +1,6 @@
 use std::fs;
 use std::io;
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 use ndarray::arr2;
 use ndarray::prelude::*;
@@ -76,6 +76,18 @@ impl Add for Vert {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
+        }
+    }
+}
+
+impl Sub for Vert {
+    type Output = Vert;
+
+    fn sub(self, other: Vert) -> Vert {
+        Vert {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
         }
     }
 }
@@ -216,9 +228,45 @@ pub fn calc_view_matrix(cam_rotation: f32, cam_pos: vec3) -> Array2<f32> {
     vm
 }
 
-fn point_at(cam_pos: vec3, target: vec3, up: vec3) -> Array2<f32> {
-    let mut vm = Array::eye(4);
-    vm[[0, 0]] - 1.;
+fn point_at(pos: vec3, target: vec3, up: vec3) -> Array2<f32> {
+    let new_forward = target - pos;
+    let new_forward_norm = normalise_vec(new_forward);
+
+    let up_dot_fwd = dot_product(up, new_forward_norm);
+
+    let a = vec3 {
+        x: new_forward_norm.x * up_dot_fwd,
+        y: new_forward_norm.y * up_dot_fwd,
+        z: new_forward_norm.z * up_dot_fwd,
+    };
+
+    let new_up = up - a;
+    let new_up_norm = normalise_vec(new_up);
+
+    let new_right = cross_product(new_up_norm, new_forward_norm);
+    // let new_right_norm = normalise_vec(new_right);
+
+    let mut vm: ArrayBase<ndarray::OwnedRepr<f32>, Dim<[usize; 2]>> = Array::eye(4);
+    vm[[0, 0]] = new_right.x;
+    vm[[0, 1]] = new_right.y;
+    vm[[0, 2]] = new_right.z;
+    vm[[0, 3]] = 0.;
+
+    vm[[1, 0]] = new_up_norm.x;
+    vm[[1, 1]] = new_up_norm.y;
+    vm[[1, 2]] = new_up_norm.z;
+    vm[[1, 3]] = 0.;
+
+    vm[[2, 0]] = new_forward_norm.x;
+    vm[[2, 1]] = new_forward_norm.y;
+    vm[[2, 2]] = new_forward_norm.z;
+    vm[[2, 3]] = 0.;
+
+    vm[[3, 0]] = pos.x;
+    vm[[3, 1]] = pos.y;
+    vm[[3, 2]] = pos.z;
+    vm[[3, 3]] = 1.;
+
     vm
 }
 
@@ -229,28 +277,108 @@ pub fn mult_vec3_mat4(vec: vec3, mat: &Array2<f32>) -> vec3 {
     vec3 { x, y, z }
 }
 
+fn normalise_vec(vec: vec3) -> vec3 {
+    let x = vec.x.powf(2.);
+    let y = vec.y.powf(2.);
+    let z = vec.z.powf(2.);
+
+    let mut xyz = (x + y + z).sqrt();
+
+    vec3 {
+        x: vec.x / xyz,
+        y: vec.y / xyz,
+        z: vec.z / xyz,
+    }
+}
+
+fn dot_product(v1: vec3, v2: vec3) -> f32 {
+    (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z)
+}
+
+fn cross_product(v1: vec3, v2: vec3) -> vec3 {
+    let x = v1.y * v2.z - v1.z * v2.y;
+    let y = v1.z * v2.x - v1.x * v2.z;
+    let z = v1.x * v2.y - v1.y * v2.x;
+
+    vec3 { x, y, z }
+}
+
 #[test]
 fn test_point_at() {
+    let expected = arr2(&[
+        [-0.40824, 0.816497, -0.40824, 0.],
+        [-0.707108, 0., 0.707105, 0.],
+        [0.57735, 0.57735, 0.57735, 0.],
+        [1., 2., 3., 1.],
+    ]);
+
+    let pos = vec3 {
+        x: 1.,
+        y: 2.,
+        z: 3.,
+    };
+
+    let target = vec3 {
+        x: 4.,
+        y: 5.,
+        z: 6.,
+    };
+
+    let up = vec3 {
+        x: 7.,
+        y: 8.,
+        z: 9.,
+    };
+
+    let result = point_at(pos, target, up);
+
+    assert_float_eq!(
+        expected.into_raw_vec(),
+        result.into_raw_vec(),
+        abs_all <= 0.0001
+    );
+}
+
+#[test]
+fn test_cross_product() {
     let expected = vec3 {
+        x: 0.5,
+        y: 6.,
+        z: -5.5,
+    };
+
+    let v1 = vec3 {
+        x: 2.,
+        y: 3.5,
+        z: 4.,
+    };
+
+    let v2 = vec3 {
+        x: 5.,
+        y: 6.,
+        z: 7.,
+    };
+
+    let result = cross_product(v1, v2);
+
+    assert_float_eq!(expected, result, abs_all <= 0.0001);
+}
+
+#[test]
+fn test_normalise_vec() {
+    let expected = vec3 {
+        x: 0.48,
+        y: 0.5724,
+        z: 0.6647,
+    };
+
+    let input = vec3 {
         x: 52.,
         y: 62.,
         z: 72.,
     };
 
-    let vec = vec3 {
-        x: 2.,
-        y: 3.,
-        z: 4.,
-    };
-
-    let matrix = arr2(&[
-        [1., 2., 3., 0.],
-        [4., 5., 6., 0.],
-        [7., 8., 9., 0.],
-        [10., 11., 12., 0.],
-    ]);
-
-    let result = mult_vec3_mat4(vec, &matrix);
+    let result = normalise_vec(expected);
 
     assert_float_eq!(expected, result, abs_all <= 0.0001);
 }
