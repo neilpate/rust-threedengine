@@ -11,8 +11,6 @@ const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
 
 fn main() {
-    println!("Hello, world!");
-
     let _obj = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string());
 
     let screen = threed::Screen {
