@@ -10,9 +10,33 @@ pub struct Point {
 }
 
 pub fn draw_horiz_line(buffer: &mut Vec<u32>, x1: u32, x2: u32, y: u32, colour: u32) {
-    for xi in x1..x2 {
-        buffer[(y as usize) * WIDTH + (xi as usize)] = colour;
+    let y_offset = (y as usize) * WIDTH;
+
+    // This niaive way also seems to be fastest
+    for i in x1 as usize..x2 as usize {
+        buffer[y_offset + i] = colour;
     }
+
+    // let range;
+    // if x1 > x2 {
+    //     range = (y_offset + x2 as usize)..(y_offset + x1 as usize);
+    // } else {
+    //     range = (y_offset + x1 as usize)..(y_offset + x2 as usize);
+    // }
+
+    //  buffer[range].fill(colour);
+    // for i in &mut buffer[range] {
+    //     *i = colour
+    // }
+
+    // for i in range {
+    //     buffer[i] = colour;
+    // }
+
+    // Trying with map, it seems slower
+    // let _dontcare: _ = (x1..x2)
+    //     .map(|x| buffer[y_offset + (x as usize)] = colour)
+    //     .collect::<()>();
 }
 
 /// Sort three points p1, p2, p3 such that the output is ordered by decreasing y

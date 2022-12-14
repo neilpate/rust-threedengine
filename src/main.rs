@@ -92,20 +92,28 @@ fn main() {
         // let p3 = Point { x: 150, y: 50 };
         // let colour = 12345;
 
-        for _i in 0..1000 {
+        let number_of_triangles = 1000;
+        let before = Instant::now();
+        let average_line_length = 100;
+        for _i in 0..number_of_triangles {
             let p1 = Point {
-                x: rng.gen_range(0..(WIDTH as u32)),
-                y: rng.gen_range(0..(HEIGHT as u32)),
+                x: rng.gen_range(0..average_line_length),
+                y: rng.gen_range(0..average_line_length),
             };
 
+            // let p2 = Point {
+            //     x: rng.gen_range(0..(WIDTH as u32)),
+            //     y: rng.gen_range(0..(HEIGHT as u32)),
+            // };
+
             let p2 = Point {
-                x: rng.gen_range(0..(WIDTH as u32)),
-                y: rng.gen_range(0..(HEIGHT as u32)),
+                x: rng.gen_range(0..average_line_length),
+                y: rng.gen_range(0..average_line_length),
             };
 
             let p3 = Point {
-                x: rng.gen_range(0..(WIDTH as u32)),
-                y: rng.gen_range(0..(HEIGHT as u32)),
+                x: rng.gen_range(0..average_line_length),
+                y: rng.gen_range(0..average_line_length),
             };
 
             let colour = rng.gen_range(0..10000000);
@@ -122,6 +130,9 @@ fn main() {
             let frame_rate = 1. / delta_time;
             println!("{frame_rate:.1} FPS",);
         }
+        let time_to_draw = (Instant::now() - before).as_millis();
+
+        println!("Time to draw {number_of_triangles} triangles: {time_to_draw} ms");
 
         prev = current;
 
