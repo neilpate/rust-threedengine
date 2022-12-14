@@ -9,6 +9,7 @@ edition = "2021"
 approx = "0.5.1"
 ndarray = { version = "0.15.6", features = ["approx"] }
 minifb = "0.23.0"
+rand = "0.8.4"
 
 [dependencies.float_eq]
 version = "1"

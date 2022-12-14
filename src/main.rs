@@ -3,6 +3,8 @@ use std::time::{Duration, Instant};
 
 use crate::raster::{draw_horiz_line, draw_triangle, Point};
 
+use rand::Rng;
+
 mod threed;
 
 mod raster;
@@ -11,6 +13,8 @@ const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
 
 fn main() {
+    let mut rng = rand::thread_rng();
+
     let _obj = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string());
 
     let screen = threed::Screen {
@@ -83,12 +87,31 @@ fn main() {
         //  update_plasma(&mut buffer, time);
         //  draw_horiz_line(&mut buffer, 0, WIDTH as u32, 100);
 
-        let p1 = Point { x: 200, y: 200 };
-        let p2 = Point { x: 50, y: 150 };
-        let p3 = Point { x: 150, y: 50 };
-        let colour = 12345;
+        // let p1 = Point { x: 200, y: 200 };
+        // let p2 = Point { x: 50, y: 150 };
+        // let p3 = Point { x: 150, y: 50 };
+        // let colour = 12345;
 
-        draw_triangle(&mut buffer, p1, p2, p3, colour);
+        for _i in 0..1000 {
+            let p1 = Point {
+                x: rng.gen_range(0..(WIDTH as u32)),
+                y: rng.gen_range(0..(HEIGHT as u32)),
+            };
+
+            let p2 = Point {
+                x: rng.gen_range(0..(WIDTH as u32)),
+                y: rng.gen_range(0..(HEIGHT as u32)),
+            };
+
+            let p3 = Point {
+                x: rng.gen_range(0..(WIDTH as u32)),
+                y: rng.gen_range(0..(HEIGHT as u32)),
+            };
+
+            let colour = rng.gen_range(0..10000000);
+
+            draw_triangle(&mut buffer, p1, p2, p3, colour);
+        }
 
         let mut current = Instant::now();
         count += 1;
