@@ -83,9 +83,9 @@ fn main() {
         //  update_plasma(&mut buffer, time);
         //  draw_horiz_line(&mut buffer, 0, WIDTH as u32, 100);
 
-        let p1 = Point { x: 50, y: 100 };
-        let p2 = Point { x: 0, y: 0 };
-        let p3 = Point { x: 100, y: 0 };
+        let p1 = Point { x: 200, y: 200 };
+        let p2 = Point { x: 50, y: 150 };
+        let p3 = Point { x: 150, y: 50 };
         let colour = 12345;
 
         draw_triangle(&mut buffer, p1, p2, p3, colour);

@@ -57,13 +57,36 @@ fn sort_points_by_y(p1: Point, p2: Point, p3: Point) -> (Point, Point, Point) {
 /// /// (0,0)---------------------> +x
 ///
 pub fn draw_triangle(buffer: &mut Vec<u32>, p1: Point, p2: Point, p3: Point, colour: u32) {
-    // Calculate p4
-    let p4 = Point { x: 0, y: 0 };
+    // Goal is to calculate p4
+    // Then draw the flat topped triangle and flat bottomed triangle
 
     // first sort the points so that p1.y > p2.y > p3.y
 
-    draw_flat_bottom_triangle(buffer, p1, p2.x, p4.x, p2.y, colour);
-    draw_flat_top_triangle(buffer, p3, p2.x, p4.x, p2.y, colour);
+    let sorted_points = sort_points_by_y(p1, p2, p3);
+
+    // Now we need to find p4
+    // Obviously it shares a y values with p2
+    // And we can calculate the gradient p3-->p4
+    // Then we can solve for p4.x
+
+    let p4y = sorted_points.1.y;
+
+    let num = (sorted_points.0.y as f32) - (sorted_points.2.y as f32);
+    let denom = (sorted_points.0.x as f32) - (sorted_points.2.x as f32);
+    let gradient_p3_p1 = num / denom;
+
+    // y = mx + c
+    // c = y - mx
+
+    // Can use either p1 or p3 to calculate c, pick p1 for no good reason
+    let c = (sorted_points.0.y as f32) - gradient_p3_p1 * (sorted_points.0.x as f32);
+
+    // x = (y -c)/m
+
+    let p4x = (((p4y as f32) - c) / gradient_p3_p1) as u32;
+
+    draw_flat_bottom_triangle(buffer, sorted_points.0, sorted_points.1.x, p4x, p4y, colour);
+    draw_flat_top_triangle(buffer, sorted_points.2, sorted_points.1.x, p4x, p4y, colour);
 }
 
 /// Draw a filled flat bottomed triangle by starting at the bottom
@@ -112,8 +135,7 @@ fn draw_flat_bottom_triangle(
         draw_horiz_line(buffer, from as u32, to as u32, y, colour);
 
         // Every iteration the horizontal line will get a bit shorter
-        // as gradient_p2_p1 is +ve
-        // and gradient_p1_p3 is -ve
+        // as gradient_p2_p1 and gradient_p1_p3 are guaranteed to be opposite directions
         from += inverse_gradient_p2_p1;
         to += inverse_gradient_p1_p3;
     }
@@ -152,8 +174,8 @@ fn draw_flat_top_triangle(
     let inverse_gradient_p1_p3 = num / denom;
 
     // The starting point is the bottom points, p1
-    let mut from = p2x as f32;
-    let mut to = p3x as f32;
+    let mut from = p1.x as f32;
+    let mut to = p1.x as f32;
 
     // We know the triangle is flat top, so p1.y < p23y
     // Create the range of y values from p1.y --> p23y
@@ -164,9 +186,8 @@ fn draw_flat_top_triangle(
         // Drawing a horizontal line
         draw_horiz_line(buffer, from as u32, to as u32, y, colour);
 
-        // Every iteration the horizontal line will get a bit shorter
-        // as gradient_p2_p1 is +ve
-        // and gradient_p1_p3 is -ve
+        // Every iteration the horizontal line will get longer as it diverges from a single point of p1 --> p2 and p3
+        // as gradient_p2_p1  and gradient_p1_p3 are guaranteed to be opposite signs
         from += inverse_gradient_p2_p1;
         to += inverse_gradient_p1_p3;
     }
