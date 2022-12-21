@@ -125,7 +125,7 @@ impl Object {
     pub fn create_from_file(obj_path: String) -> Result<Object, io::Error> {
         let content = fs::read_to_string(obj_path)?;
         //   println!("{content}");
-        let lines = content.split("\r\n");
+        let lines: Vec<&str> = content.split("\r\n").collect();
 
         let mut verts: Vec<Vert> = Vec::new();
         let mut faces: Vec<(usize, usize, usize)> = Vec::new();
@@ -307,7 +307,17 @@ pub fn mult_vec3_mat4(vec: vec3, mat: &Array2<f32>) -> vec3 {
     let x = mat[[0, 0]] * vec.x + mat[[1, 0]] * vec.y + mat[[2, 0]] * vec.z + mat[[3, 0]];
     let y = mat[[0, 1]] * vec.x + mat[[1, 1]] * vec.y + mat[[2, 1]] * vec.z + mat[[3, 1]];
     let z = mat[[0, 2]] * vec.x + mat[[1, 2]] * vec.y + mat[[2, 2]] * vec.z + mat[[3, 2]];
-    vec3 { x, y, z }
+    let w = mat[[0, 3]] * vec.x + mat[[1, 3]] * vec.y + mat[[2, 3]] * vec.z + mat[[3, 3]];
+
+    if w == 0. {
+        vec3 { x, y, z }
+    } else {
+        vec3 {
+            x: x / w,
+            y: y / w,
+            z: z / w,
+        }
+    }
 }
 
 pub fn quick_invert_mat4(mat: Array2<f32>) -> Array2<f32> {
@@ -352,6 +362,18 @@ fn normalise_vec(vec: vec3) -> vec3 {
         z: vec.z / xyz,
     }
 }
+
+pub fn normal(v1: &vec3, v2: &vec3, v3 : &vec3) -> vec3 {
+    let a = *v2 - *v1;
+    let b = *v3 - *v1;
+
+    let x = (a.y * b.z) - (a.z * b.y);
+    let y = (a.z * b.x) - (a.x * b.z);
+    let z = (a.x * b.y) - (a.y * b.x);
+
+    normalise_vec(vec3 {x, y, z})
+}
+
 
 fn dot_product(v1: vec3, v2: vec3) -> f32 {
     (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z)
@@ -515,6 +537,37 @@ fn test_normalise_vec() {
 }
 
 #[test]
+fn test_normal() {
+    let expected = vec3 {
+        x: 0.935472,
+        y: -0.311824,
+        z: -0.166306,
+    };
+
+    let v1 = vec3 {
+        x: 1.,
+        y: -2.,
+        z: 5.,
+    };
+
+    let v2 = vec3 {
+        x: 2.,
+        y: 9.,
+        z: -10.,
+    };
+
+    let v3 = vec3 {
+        x: 3.,
+        y: 4.,
+        z: 5.,
+    };
+
+    let result = normal(&v1, &v2, &v3);
+
+    assert_float_eq!(expected, result, abs_all <= 0.0001);
+}
+
+#[test]
 fn test_create_x_rotation_matrix() {
     let expected = arr2(&[
         [1f32, 0., 0., 0.],
@@ -639,6 +692,32 @@ fn test_mult_vec_matrix_3() {
         [4., 5., 6., 0.],
         [7., -8., 9., 0.],
         [10., 0.1, -0.2, 0.],
+    ]);
+
+    let result = mult_vec3_mat4(vec, &matrix);
+
+    assert_float_eq!(expected, result, abs_all <= 0.0001);
+}
+
+#[test]
+fn test_mult_vec_matrix_4() {
+    let expected = vec3 {
+        x: -0.061859,
+        y: -0.494872,
+        z: 0.995338,
+    };
+
+    let vec = vec3 {
+        x: -1.,
+        y: -6.,
+        z: 21.,
+    };
+
+    let matrix = arr2(&[
+        [1.29904, 0., 0., 0.],
+        [0., 1.73205, 0., 0.],
+        [0., 0., 1.0001, 1.],
+        [0., 0., -0.10001, 0.],
     ]);
 
     let result = mult_vec3_mat4(vec, &matrix);

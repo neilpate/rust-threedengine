@@ -14,7 +14,11 @@ pub fn draw_horiz_line(buffer: &mut Vec<u32>, x1: u32, x2: u32, y: u32, colour: 
 
     // This niaive way also seems to be fastest
     for i in x1 as usize..x2 as usize {
-        buffer[y_offset + i] = colour;
+        let index = y_offset + i;
+
+        if index < buffer.len() {
+            buffer[y_offset + i] = colour;
+        }
     }
 
     // let range;
