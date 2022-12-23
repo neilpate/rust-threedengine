@@ -10,6 +10,12 @@ mod raster;
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
 
+struct Core {
+    view_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
+    proj_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
+    _cam_pos: threed::vec3,
+}
+
 fn main() {
     let screen = threed::Screen {
         width: 800,
@@ -31,6 +37,12 @@ fn main() {
 
     let view_mat = threed::create_view_matrix(0., cam_pos);
 
+    let core = Core {
+        view_mat,
+        proj_mat,
+        _cam_pos: cam_pos,
+    };
+
     let mut window = Window::new(
         "3D Renderer",
         WIDTH,
@@ -49,7 +61,6 @@ fn main() {
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
     let cube = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string()).unwrap();
-
     println!("{cube:?}");
 
     let mut prev = Instant::now();
@@ -77,70 +88,11 @@ fn main() {
         let mut new_obj = raster::Object::new(tris);
 
         for tri in &cube.tris {
-            //for i in 0..1 {
-            //    let tri = &cube.tris[i];
-            let mut v1 = threed::mult_vec3_mat4(tri.v1, &rot_z_mat);
-            v1 = threed::mult_vec3_mat4(v1, &rot_y_mat);
-            v1 = threed::mult_vec3_mat4(v1, &rot_x_mat);
-            v1 = threed::mult_vec3_mat4(v1, &trans_mat);
+            let proc_tri = process_tri(&core, tri, &rot_z_mat, &rot_y_mat, &rot_x_mat, &trans_mat);
 
-            let mut v2 = threed::mult_vec3_mat4(tri.v2, &rot_z_mat);
-            v2 = threed::mult_vec3_mat4(v2, &rot_y_mat);
-            v2 = threed::mult_vec3_mat4(v2, &rot_x_mat);
-            v2 = threed::mult_vec3_mat4(v2, &trans_mat);
-
-            let mut v3 = threed::mult_vec3_mat4(tri.v3, &rot_z_mat);
-            //  v3 = threed::mult_vec3_mat4(v3, &rot_z_mat);
-            v3 = threed::mult_vec3_mat4(v3, &rot_y_mat);
-            v3 = threed::mult_vec3_mat4(v3, &rot_x_mat);
-            v3 = threed::mult_vec3_mat4(v3, &trans_mat);
-
-            let normal = threed::normal(&tri.v1, &tri.v2, &tri.v3);
-
-            if normal.z <= 0. {
-                v1 = threed::mult_vec3_mat4(v1, &view_mat);
-                v1 = threed::mult_vec3_mat4(v1, &proj_mat);
-                v2 = threed::mult_vec3_mat4(v2, &view_mat);
-                v2 = threed::mult_vec3_mat4(v2, &proj_mat);
-                v3 = threed::mult_vec3_mat4(v3, &view_mat);
-                v3 = threed::mult_vec3_mat4(v3, &proj_mat);
-
-                v1.x += 1.;
-                v1.x *= 0.5 * (WIDTH as f32);
-                v1.y += 1.;
-                v1.y *= 0.5 * (HEIGHT as f32);
-
-                v2.x += 1.;
-                v2.x *= 0.5 * (WIDTH as f32);
-                v2.y += 1.;
-                v2.y *= 0.5 * (HEIGHT as f32);
-
-                v3.x += 1.;
-                v3.x *= 0.5 * (WIDTH as f32);
-                v3.y += 1.;
-                v3.y *= 0.5 * (HEIGHT as f32);
-
-                let p1 = Point {
-                    x: v1.x as u32,
-                    y: v1.y as u32,
-                    z: v1.z as i32,
-                };
-
-                let p2 = Point {
-                    x: v2.x as u32,
-                    y: v2.y as u32,
-                    z: v2.z as i32,
-                };
-
-                let p3 = Point {
-                    x: v3.x as u32,
-                    y: v3.y as u32,
-                    z: v3.z as i32,
-                };
-
-                let tri = raster::Tri { p1, p2, p3 };
-
-                new_obj.tris.push(tri);
+            match proc_tri {
+                Some(tri) => new_obj.tris.push(tri),
+                None => (),
             }
         }
 
@@ -149,5 +101,76 @@ fn main() {
         }
 
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+    }
+}
+
+fn process_tri(
+    core: &Core,
+    tri: &threed::Tri,
+    rot_z_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
+    rot_y_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
+    rot_x_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
+    trans_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
+) -> Option<raster::Tri> {
+    //for i in 0..1 {
+    //    let tri = &cube.tris[i];
+    let mut v1 = threed::mult_vec3_mat4(tri.v1, rot_z_mat);
+    v1 = threed::mult_vec3_mat4(v1, rot_y_mat);
+    v1 = threed::mult_vec3_mat4(v1, rot_x_mat);
+    v1 = threed::mult_vec3_mat4(v1, trans_mat);
+    let mut v2 = threed::mult_vec3_mat4(tri.v2, rot_z_mat);
+    v2 = threed::mult_vec3_mat4(v2, rot_y_mat);
+    v2 = threed::mult_vec3_mat4(v2, rot_x_mat);
+    v2 = threed::mult_vec3_mat4(v2, trans_mat);
+    let mut v3 = threed::mult_vec3_mat4(tri.v3, rot_z_mat);
+    v3 = threed::mult_vec3_mat4(v3, rot_y_mat);
+    v3 = threed::mult_vec3_mat4(v3, rot_x_mat);
+    v3 = threed::mult_vec3_mat4(v3, trans_mat);
+
+    let normal = threed::normal(&tri.v1, &tri.v2, &tri.v3);
+    if normal.z <= 0. {
+        v1 = threed::mult_vec3_mat4(v1, &core.view_mat);
+        v1 = threed::mult_vec3_mat4(v1, &core.proj_mat);
+        v2 = threed::mult_vec3_mat4(v2, &core.view_mat);
+        v2 = threed::mult_vec3_mat4(v2, &core.proj_mat);
+        v3 = threed::mult_vec3_mat4(v3, &core.view_mat);
+        v3 = threed::mult_vec3_mat4(v3, &core.proj_mat);
+
+        v1.x += 1.;
+        v1.x *= 0.5 * (WIDTH as f32);
+        v1.y += 1.;
+        v1.y *= 0.5 * (HEIGHT as f32);
+
+        v2.x += 1.;
+        v2.x *= 0.5 * (WIDTH as f32);
+        v2.y += 1.;
+        v2.y *= 0.5 * (HEIGHT as f32);
+
+        v3.x += 1.;
+        v3.x *= 0.5 * (WIDTH as f32);
+        v3.y += 1.;
+        v3.y *= 0.5 * (HEIGHT as f32);
+
+        let p1 = Point {
+            x: v1.x as u32,
+            y: v1.y as u32,
+            z: v1.z as i32,
+        };
+
+        let p2 = Point {
+            x: v2.x as u32,
+            y: v2.y as u32,
+            z: v2.z as i32,
+        };
+
+        let p3 = Point {
+            x: v3.x as u32,
+            y: v3.y as u32,
+            z: v3.z as i32,
+        };
+
+        Some(raster::Tri { p1, p2, p3 })
+    } else {
+        None
     }
 }
