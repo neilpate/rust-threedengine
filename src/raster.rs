@@ -3,14 +3,32 @@ use std::mem;
 use crate::HEIGHT;
 use crate::WIDTH;
 
+pub struct Tri {
+    pub p1: Point,
+    pub p2: Point,
+    pub p3: Point,
+}
+
+pub struct Object {
+    pub tris: Vec<Tri>,
+}
+
+impl Object {
+    pub fn new(tris: Vec<Tri>) -> Self {
+        Self { tris }
+    }
+}
+
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Point {
     pub x: u32,
     pub y: u32,
+    pub z: i32,
 }
 
 pub fn draw_horiz_line(buffer: &mut Vec<u32>, x1: u32, x2: u32, y: u32, colour: u32) {
-    let y_offset = (y as usize) * WIDTH;
+    let y = y as usize;
+    let y_offset = (HEIGHT - y - 1) * WIDTH;
 
     // This niaive way also seems to be fastest
     for i in x1 as usize..x2 as usize {
@@ -223,9 +241,9 @@ fn draw_flat_top_triangle(
 
 #[test]
 fn test_sort_points_1() {
-    let p1 = Point { x: 0, y: 0 };
-    let p2 = Point { x: 0, y: 1 };
-    let p3 = Point { x: 0, y: 2 };
+    let p1 = Point { x: 0, y: 0, z: 0 };
+    let p2 = Point { x: 0, y: 1, z: 0 };
+    let p3 = Point { x: 0, y: 2, z: 0 };
 
     let expected = (p3, p2, p1);
 
@@ -236,9 +254,9 @@ fn test_sort_points_1() {
 
 #[test]
 fn test_sort_points_2() {
-    let p1 = Point { x: 0, y: 100 };
-    let p2 = Point { x: 0, y: 50 };
-    let p3 = Point { x: 0, y: 200 };
+    let p1 = Point { x: 0, y: 100, z: 0 };
+    let p2 = Point { x: 0, y: 50, z: 0 };
+    let p3 = Point { x: 0, y: 200, z: 0 };
 
     let expected = (p3, p1, p2);
 

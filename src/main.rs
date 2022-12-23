@@ -1,15 +1,7 @@
 use minifb::{Key, Scale, Window, WindowOptions};
-use std::{
-    fmt::Error,
-    time::{Duration, Instant},
-};
+use std::time::Instant;
 
-use crate::{
-    raster::{draw_horiz_line, draw_triangle, Point},
-    threed::Tri,
-};
-
-use rand::Rng;
+use crate::raster::{draw_triangle, Point};
 
 mod threed;
 
@@ -19,9 +11,7 @@ const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
 
 fn main() {
-    let mut rng = rand::thread_rng();
-
-    let mut cube = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string()).unwrap();
+    let cube = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string()).unwrap();
 
     println!("{cube:?}");
 
@@ -84,18 +74,20 @@ fn main() {
 
         let trans_mat = threed::create_translation_matrix(0., 0., 0.);
 
-        let new = cube.tris.into_iter().map(|tri| {
+        let tris: Vec<raster::Tri> = Vec::new();
+        let mut new_obj = raster::Object::new(tris);
 
+        for tri in &cube.tris {
             let mut v1 = threed::mult_vec3_mat4(tri.v1, &rot_z_mat);
             v1 = threed::mult_vec3_mat4(v1, &rot_y_mat);
             v1 = threed::mult_vec3_mat4(v1, &rot_x_mat);
             v1 = threed::mult_vec3_mat4(v1, &trans_mat);
-            
+
             let mut v2 = threed::mult_vec3_mat4(tri.v2, &rot_z_mat);
             v2 = threed::mult_vec3_mat4(v2, &rot_y_mat);
             v2 = threed::mult_vec3_mat4(v2, &rot_x_mat);
             v2 = threed::mult_vec3_mat4(v2, &trans_mat);
-            
+
             let mut v3 = threed::mult_vec3_mat4(tri.v3, &rot_z_mat);
             v3 = threed::mult_vec3_mat4(v3, &rot_z_mat);
             v3 = threed::mult_vec3_mat4(v3, &rot_y_mat);
@@ -105,136 +97,58 @@ fn main() {
             let normal = threed::normal(&tri.v1, &tri.v2, &tri.v3);
 
             if normal.z <= 0. {
-            
-            v1 = threed::mult_vec3_mat4(v1, &view_mat);
-            v1 = threed::mult_vec3_mat4(v1, &proj_mat);
-            v2 = threed::mult_vec3_mat4(v2, &view_mat);
-            v2 = threed::mult_vec3_mat4(v2, &proj_mat);
-            v3 = threed::mult_vec3_mat4(v3, &view_mat);
-            v3 = threed::mult_vec3_mat4(v3, &proj_mat);
-          
-            v1.x += 1.;
-            v1.x *= 0.5 * (WIDTH as f32);
-            v1.y += 1.;
-            v1.y *= 0.5 * (HEIGHT as f32);
+                v1 = threed::mult_vec3_mat4(v1, &view_mat);
+                v1 = threed::mult_vec3_mat4(v1, &proj_mat);
+                v2 = threed::mult_vec3_mat4(v2, &view_mat);
+                v2 = threed::mult_vec3_mat4(v2, &proj_mat);
+                v3 = threed::mult_vec3_mat4(v3, &view_mat);
+                v3 = threed::mult_vec3_mat4(v3, &proj_mat);
 
-            v2.x += 1.;
-            v2.x *= 0.5 * (WIDTH as f32);
-            v2.y += 1.;
-            v2.y *= 0.5 * (HEIGHT as f32);
+                v1.x += 1.;
+                v1.x *= 0.5 * (WIDTH as f32);
+                v1.y += 1.;
+                v1.y *= 0.5 * (HEIGHT as f32);
 
-            v3.x += 1.;
-            v3.x *= 0.5 * (WIDTH as f32);
-            v3.y += 1.;
-            v3.y *= 0.5 * (HEIGHT as f32);
-           
+                v2.x += 1.;
+                v2.x *= 0.5 * (WIDTH as f32);
+                v2.y += 1.;
+                v2.y *= 0.5 * (HEIGHT as f32);
+
+                v3.x += 1.;
+                v3.x *= 0.5 * (WIDTH as f32);
+                v3.y += 1.;
+                v3.y *= 0.5 * (HEIGHT as f32);
+
                 let p1 = Point {
-                x: v1.x as u32,
-                y: v1.y as u32,
-            };
+                    x: v1.x as u32,
+                    y: v1.y as u32,
+                    z: v1.z as i32,
+                };
 
-            let p2 = Point {
-                x: v2.x as u32,
-                y: v2.y as u32,
-            };
+                let p2 = Point {
+                    x: v2.x as u32,
+                    y: v2.y as u32,
+                    z: v2.z as i32,
+                };
 
-            let p3 = Point {
-                x: v3.x as u32,
-                y: v3.y as u32,
-            };
-            Some((p1, p2, p3))
+                let p3 = Point {
+                    x: v3.x as u32,
+                    y: v3.y as u32,
+                    z: v3.z as i32,
+                };
 
-        }
-        else{
-            None
-        }
+                let tri = raster::Tri { p1, p2, p3 };
 
-
-         }).collect::<Vec<_>>();
-
-    //        draw_triangle(&mut buffer, p1, p2, p3, 123456);
-
-        //  update_plasma(&mut buffer, time);
-        //  draw_horiz_line(&mut buffer, 0, WIDTH as u32, 100);
-
-        // let p1 = Point { x: 200, y: 200 };
-        // let p2 = Point { x: 50, y: 150 };
-        // let p3 = Point { x: 150, y: 50 };
-        // let colour = 12345;
-
-        let number_of_triangles = 0;
-        let before = Instant::now();
-        let average_line_length = 100;
-        for _i in 0..number_of_triangles {
-            let p1 = Point {
-                x: rng.gen_range(0..average_line_length),
-                y: rng.gen_range(0..average_line_length),
-            };
-
-            // let p2 = Point {
-            //     x: rng.gen_range(0..(WIDTH as u32)),
-            //     y: rng.gen_range(0..(HEIGHT as u32)),
-            // };
-
-            let p2 = Point {
-                x: rng.gen_range(0..average_line_length),
-                y: rng.gen_range(0..average_line_length),
-            };
-
-            let p3 = Point {
-                x: rng.gen_range(0..average_line_length),
-                y: rng.gen_range(0..average_line_length),
-            };
-
-            let colour = rng.gen_range(0..10000000);
-
-            draw_triangle(&mut buffer, p1, p2, p3, colour);
+                new_obj.tris.push(tri);
+            }
         }
 
-        let mut current = Instant::now();
-        _count += 1;
-
-        // if count == 1000 {
-        //     count = 0;
-        //     let delta_time = (current - prev).as_secs_f32();
-        //     let frame_rate = 1. / delta_time;
-        //     println!("{frame_rate:.1} FPS",);
-        // }
-        // let time_to_draw = (Instant::now() - before).as_millis();
-
-        // println!("Time to draw {number_of_triangles} triangles: {time_to_draw} ms");
-
-        _prev = current;
+        for tri in new_obj.tris {
+            draw_triangle(&mut buffer, tri.p1, tri.p2, tri.p3, 123456);
+        }
 
         window
             .update_with_buffer(&buffer, new_size.0, new_size.1)
             .unwrap();
-
-    }
-}
-
-fn update_plasma(buffer: &mut Vec<u32>, time: f32) {
-    let y_step = 1.0 / HEIGHT as f32;
-    let x_step = 1.0 / WIDTH as f32;
-    let mut y = 0.0;
-    for yi in 0..HEIGHT {
-        let buf = &mut buffer[yi * WIDTH..(yi + 1) * WIDTH];
-        let mut x = 0.0f32;
-
-        // So this code is really slow, but good enough as example :)
-        for xi in 0..WIDTH {
-            let k = 0.1 + (y + (0.148 - time).sin()).cos() + 2.4 * time;
-            let w = 0.9 + (x + (0.628 + time).cos()).cos() - 0.7 * time;
-            let d = (x * x + y * y).sqrt();
-            let s = 7.0 * (d + w).cos() * (k + w).sin();
-            let r = ((s + 0.2).cos() * 255.0) as u32;
-            let g = ((s + 0.5).cos() * 255.0) as u32;
-            let b = ((s + 0.7).cos() * 255.0) as u32;
-            buf[xi] = (r << 16) | (g << 8) | b;
-
-            x += x_step;
-        }
-
-        y += y_step;
     }
 }

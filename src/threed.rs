@@ -104,6 +104,10 @@ pub struct Object {
 }
 
 impl Object {
+    pub fn new(tris: Vec<Tri>) -> Self {
+        Self { tris }
+    }
+
     fn face_from_string(s: String) -> Option<(usize, usize, usize)> {
         // println!("Face from string: {s}");
         let chunks: Vec<&str> = s.split(" ").collect();
@@ -125,7 +129,7 @@ impl Object {
     pub fn create_from_file(obj_path: String) -> Result<Object, io::Error> {
         let content = fs::read_to_string(obj_path)?;
         //   println!("{content}");
-        let lines: Vec<&str> = content.split("\r\n").collect();
+        let lines: Vec<&str> = content.split("\n").collect();
 
         let mut verts: Vec<Vert> = Vec::new();
         let mut faces: Vec<(usize, usize, usize)> = Vec::new();
@@ -363,7 +367,7 @@ fn normalise_vec(vec: vec3) -> vec3 {
     }
 }
 
-pub fn normal(v1: &vec3, v2: &vec3, v3 : &vec3) -> vec3 {
+pub fn normal(v1: &vec3, v2: &vec3, v3: &vec3) -> vec3 {
     let a = *v2 - *v1;
     let b = *v3 - *v1;
 
@@ -371,9 +375,8 @@ pub fn normal(v1: &vec3, v2: &vec3, v3 : &vec3) -> vec3 {
     let y = (a.z * b.x) - (a.x * b.z);
     let z = (a.x * b.y) - (a.y * b.x);
 
-    normalise_vec(vec3 {x, y, z})
+    normalise_vec(vec3 { x, y, z })
 }
-
 
 fn dot_product(v1: vec3, v2: vec3) -> f32 {
     (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z)
