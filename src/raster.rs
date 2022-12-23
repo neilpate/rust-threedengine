@@ -30,21 +30,21 @@ pub fn draw_horiz_line(buffer: &mut Vec<u32>, x1: u32, x2: u32, y: u32, colour: 
     let y = y as usize;
     let y_offset = (HEIGHT - y - 1) * WIDTH;
 
+    let range;
+    if x1 > x2 {
+        range = (x2 as usize)..(x1 as usize);
+    } else {
+        range = (x1 as usize)..(x2 as usize);
+    }
+
     // This niaive way also seems to be fastest
-    for i in x1 as usize..x2 as usize {
+    for i in range {
         let index = y_offset + i;
 
         if index < buffer.len() {
             buffer[y_offset + i] = colour;
         }
     }
-
-    // let range;
-    // if x1 > x2 {
-    //     range = (y_offset + x2 as usize)..(y_offset + x1 as usize);
-    // } else {
-    //     range = (y_offset + x1 as usize)..(y_offset + x2 as usize);
-    // }
 
     //  buffer[range].fill(colour);
     // for i in &mut buffer[range] {

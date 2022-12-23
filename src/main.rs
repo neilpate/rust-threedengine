@@ -68,9 +68,9 @@ fn main() {
             buffer.resize(size.0 * size.1, 0);
         }
 
-        let rot_x_mat = threed::create_x_rotation_matrix(0.);
-        let rot_y_mat = threed::create_y_rotation_matrix(0.);
-        let rot_z_mat = threed::create_z_rotation_matrix(0.);
+        let rot_x_mat = threed::create_x_rotation_matrix(-25.);
+        let rot_y_mat = threed::create_y_rotation_matrix(50.);
+        let rot_z_mat = threed::create_z_rotation_matrix(80.);
 
         let trans_mat = threed::create_translation_matrix(0., 0., 0.);
 
@@ -78,6 +78,8 @@ fn main() {
         let mut new_obj = raster::Object::new(tris);
 
         for tri in &cube.tris {
+            //for i in 0..1 {
+            //    let tri = &cube.tris[i];
             let mut v1 = threed::mult_vec3_mat4(tri.v1, &rot_z_mat);
             v1 = threed::mult_vec3_mat4(v1, &rot_y_mat);
             v1 = threed::mult_vec3_mat4(v1, &rot_x_mat);
@@ -89,7 +91,7 @@ fn main() {
             v2 = threed::mult_vec3_mat4(v2, &trans_mat);
 
             let mut v3 = threed::mult_vec3_mat4(tri.v3, &rot_z_mat);
-            v3 = threed::mult_vec3_mat4(v3, &rot_z_mat);
+            //  v3 = threed::mult_vec3_mat4(v3, &rot_z_mat);
             v3 = threed::mult_vec3_mat4(v3, &rot_y_mat);
             v3 = threed::mult_vec3_mat4(v3, &rot_x_mat);
             v3 = threed::mult_vec3_mat4(v3, &trans_mat);
