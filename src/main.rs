@@ -40,7 +40,7 @@ fn main() {
     println!("{}", view_mat);
 
     let mut window = Window::new(
-        "Plasma + Text Example",
+        "3D Renderer",
         WIDTH,
         HEIGHT,
         WindowOptions {
@@ -52,14 +52,14 @@ fn main() {
     .expect("Unable to create window");
 
     // Limit to max ~60 fps update rate
-    window.limit_update_rate(Some(std::time::Duration::from_millis(10)));
+    //  window.limit_update_rate(Some(std::time::Duration::from_millis(10)));
 
     let mut buffer: Vec<u32> = Vec::with_capacity(WIDTH * HEIGHT);
 
     let mut size = (0, 0);
 
-    let mut _prev = Instant::now();
-    let mut _count = 0;
+    let mut prev = Instant::now();
+    let mut count = 0;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let new_size = (window.get_size().0, window.get_size().1);
@@ -67,6 +67,17 @@ fn main() {
             size = new_size;
             buffer.resize(size.0 * size.1, 0);
         }
+
+        count += 1;
+        let now = Instant::now();
+        let fps = 1. / (now - prev).as_secs_f32();
+
+        if count > 100 {
+            count = 0;
+            println!("FPS: {fps}");
+        }
+
+        prev = now;
 
         let rot_x_mat = threed::create_x_rotation_matrix(-25.);
         let rot_y_mat = threed::create_y_rotation_matrix(50.);
