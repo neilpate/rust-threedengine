@@ -102,13 +102,13 @@ fn sort_points_by_y(p1: Point, p2: Point, p3: Point) -> (Point, Point, Point) {
 ///
 /// /// (0,0)---------------------> +x
 ///
-pub fn draw_triangle(buffer: &mut Vec<u32>, p1: Point, p2: Point, p3: Point, colour: u32) {
+pub fn draw_triangle(buffer: &mut Vec<u32>, tri: Tri, colour: u32) {
     // Goal is to calculate p4
     // Then draw the flat topped triangle and flat bottomed triangle
 
     // first sort the points so that p1.y > p2.y > p3.y
 
-    let sorted_points = sort_points_by_y(p1, p2, p3);
+    let sorted_points = sort_points_by_y(tri.p1, tri.p2, tri.p3);
 
     // Now we need to find p4
     // Obviously it shares a y values with p2

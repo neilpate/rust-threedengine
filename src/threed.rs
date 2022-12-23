@@ -363,9 +363,9 @@ fn normalise_vec(vec: vec3) -> vec3 {
     }
 }
 
-pub fn normal(v1: &vec3, v2: &vec3, v3: &vec3) -> vec3 {
-    let a = *v2 - *v1;
-    let b = *v3 - *v1;
+pub fn normal(tri: &Tri) -> vec3 {
+    let a = tri.v2 - tri.v1;
+    let b = tri.v3 - tri.v1;
 
     let x = (a.y * b.z) - (a.z * b.y);
     let y = (a.z * b.x) - (a.x * b.z);
@@ -561,7 +561,9 @@ fn test_normal() {
         z: 5.,
     };
 
-    let result = normal(&v1, &v2, &v3);
+    let tri = Tri { v1, v2, v3 };
+
+    let result = normal(&tri);
 
     assert_float_eq!(expected, result, abs_all <= 0.0001);
 }

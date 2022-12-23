@@ -97,7 +97,7 @@ fn main() {
         }
 
         for tri in new_obj.tris {
-            draw_triangle(&mut buffer, tri.p1, tri.p2, tri.p3, 123456);
+            draw_triangle(&mut buffer, tri, 123456);
         }
 
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
@@ -127,7 +127,9 @@ fn process_tri(
     v3 = threed::mult_vec3_mat4(v3, rot_x_mat);
     v3 = threed::mult_vec3_mat4(v3, trans_mat);
 
-    let normal = threed::normal(&tri.v1, &tri.v2, &tri.v3);
+    let tri = threed::Tri { v1, v2, v3 };
+
+    let normal = threed::normal(&tri);
     if normal.z <= 0. {
         v1 = threed::mult_vec3_mat4(v1, &core.view_mat);
         v1 = threed::mult_vec3_mat4(v1, &core.proj_mat);
