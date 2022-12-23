@@ -11,10 +11,6 @@ const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
 
 fn main() {
-    let cube = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string()).unwrap();
-
-    println!("{cube:?}");
-
     let screen = threed::Screen {
         width: 800,
         height: 600,
@@ -26,8 +22,6 @@ fn main() {
     };
 
     let proj_mat = threed::create_projection_matrix(screen, camera);
-    println!("Projection matrix:");
-    println!("{}", proj_mat);
 
     let cam_pos = threed::vec3 {
         x: 0.,
@@ -36,8 +30,6 @@ fn main() {
     };
 
     let view_mat = threed::create_view_matrix(0., cam_pos);
-    println!("View matrix:");
-    println!("{}", view_mat);
 
     let mut window = Window::new(
         "3D Renderer",
@@ -54,20 +46,16 @@ fn main() {
     // Limit to max ~60 fps update rate
     //  window.limit_update_rate(Some(std::time::Duration::from_millis(10)));
 
-    let mut buffer: Vec<u32> = Vec::with_capacity(WIDTH * HEIGHT);
+    let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    let mut size = (0, 0);
+    let cube = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string()).unwrap();
+
+    println!("{cube:?}");
 
     let mut prev = Instant::now();
     let mut count = 0;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        let new_size = (window.get_size().0, window.get_size().1);
-        if new_size != size {
-            size = new_size;
-            buffer.resize(size.0 * size.1, 0);
-        }
-
         count += 1;
         let now = Instant::now();
         let fps = 1. / (now - prev).as_secs_f32();
@@ -160,8 +148,6 @@ fn main() {
             draw_triangle(&mut buffer, tri.p1, tri.p2, tri.p3, 123456);
         }
 
-        window
-            .update_with_buffer(&buffer, new_size.0, new_size.1)
-            .unwrap();
+        window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
     }
 }

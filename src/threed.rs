@@ -104,10 +104,6 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(tris: Vec<Tri>) -> Self {
-        Self { tris }
-    }
-
     fn face_from_string(s: String) -> Option<(usize, usize, usize)> {
         // println!("Face from string: {s}");
         let chunks: Vec<&str> = s.split(" ").collect();
