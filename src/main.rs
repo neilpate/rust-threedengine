@@ -60,8 +60,8 @@ fn main() {
 
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    // let object_path = "c:\\temp\\cube.obj";
-    let object_path = "c:\\temp\\teapot.obj";
+    let object_path = "c:\\temp\\cube.obj";
+    // let object_path = "c:\\temp\\teapot.obj";
     let cube = threed::Object::create_from_file(object_path.to_string()).unwrap();
     //   println!("{cube:?}");
 
@@ -85,8 +85,8 @@ fn main() {
         let rot_z_mat = threed::create_z_rotation_matrix(80.);
         let trans_mat = threed::create_translation_matrix(0., 0., 0.);
 
-        let tris: Vec<raster::Tri> = Vec::new();
-        let mut new_obj = raster::Object::new(tris);
+        let mut tris: Vec<(raster::Tri, threed::vec3)> = Vec::new();
+        //  let mut new_obj = raster::Object::new(tris);
 
         //for i in 0..1 {
         //    let tri = &cube.tris[i];
@@ -94,13 +94,27 @@ fn main() {
             let proc_tri = process_tri(&core, tri, &rot_z_mat, &rot_y_mat, &rot_x_mat, &trans_mat);
 
             match proc_tri {
-                Some(tri) => new_obj.tris.push(tri),
+                Some(tri) => tris.push(tri),
                 None => (),
             }
         }
 
-        for tri in new_obj.tris {
-            draw_triangle(&mut buffer, tri, 123456);
+        for tri in tris {
+            let light_dir = threed::vec3 {
+                x: 1.,
+                y: 2.,
+                z: 3.,
+            };
+
+            let albedo_r = 190u32;
+            let albedo_g = 255u32;
+            let albedo_b = 136u32;
+
+            //Packing goes BGRA
+            let albedo = (albedo_b << 24) + (albedo_g << 16) + (albedo_r << 8);
+            let colour = threed::calc_tri_illum(light_dir, tri.1, albedo);
+
+            draw_triangle(&mut buffer, tri.0, colour);
         }
 
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
@@ -114,7 +128,7 @@ fn process_tri(
     rot_y_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     rot_x_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     trans_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-) -> Option<raster::Tri> {
+) -> Option<(raster::Tri, threed::Vert)> {
     let mut tri = transform_tri(tri, rot_z_mat, rot_y_mat, rot_x_mat, trans_mat);
 
     let normal = threed::normal(&tri);
@@ -160,7 +174,7 @@ fn process_tri(
             z: tri.v3.z as i32,
         };
 
-        Some(raster::Tri { p1, p2, p3 })
+        Some((raster::Tri { p1, p2, p3 }, normal))
     } else {
         None
     }

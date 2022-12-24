@@ -386,6 +386,66 @@ fn cross_product(v1: vec3, v2: vec3) -> vec3 {
     vec3 { x, y, z }
 }
 
+pub fn calc_tri_illum(light_dir: vec3, tri_normal: vec3, colour: u32) -> u32 {
+    let norm = normalise_vec(light_dir);
+    let dp = dot_product(norm, tri_normal);
+
+    let new_colour = dp.max(0.01);
+
+    //Packing goes BGRA
+    let r = colour & 0xff00;
+    let g = colour & 0xff0000;
+    let b = colour & 0xff000000;
+
+    let r = ((r as f32) * new_colour) as u32;
+    let g = ((g as f32) * new_colour) as u32;
+    let b = ((b as f32) * new_colour) as u32;
+
+    r + g + b
+}
+
+#[test]
+fn test_calc_tri_illum() {
+    let expected = 961644u32;
+
+    let light_dir = vec3 {
+        x: 1.,
+        y: 2.,
+        z: 3.,
+    };
+
+    let tri_normal = vec3 {
+        x: -2.,
+        y: 4.,
+        z: -1.,
+    };
+
+    let actual = calc_tri_illum(light_dir, tri_normal, 1234567);
+
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn test_calc_tri_illum2() {
+    let expected = 2766878u32;
+
+    let light_dir = vec3 {
+        x: 0.,
+        y: 10.,
+        z: -10.,
+    };
+
+    let tri_normal = vec3 {
+        x: 0.766045,
+        y: -0.271654,
+        z: -0.582563,
+    };
+
+    let actual = calc_tri_illum(light_dir, tri_normal, 1234567);
+
+    assert_eq!(expected, actual);
+}
+
 #[test]
 fn test_quick_invert() {
     let expected = arr2(&[
