@@ -104,6 +104,7 @@ fn sort_points_by_y(p1: Point, p2: Point, p3: Point) -> (Point, Point, Point) {
 ///
 /// /// (0,0)---------------------> +x
 ///
+///
 pub fn draw_triangle(buffer: &mut Vec<u32>, tri: Tri, colour: u32) {
     // Goal is to calculate p4
     // Then draw the flat topped triangle and flat bottomed triangle
@@ -246,12 +247,7 @@ fn draw_flat_top_triangle(
 }
 
 fn check_bounds(from: u32, to: u32, y: u32) -> bool {
-    if ((y as usize) < HEIGHT)
-        & ((from as usize) < WIDTH)
-        & (from > 300)
-        & ((to as usize) < WIDTH)
-        & (to > 300)
-    {
+    if ((y as usize) < HEIGHT) & ((from as usize) < WIDTH) & ((to as usize) < WIDTH) {
         true
     } else {
         false
