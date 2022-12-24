@@ -60,7 +60,9 @@ fn main() {
 
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    let cube = threed::Object::create_from_file("c:\\temp\\cube.obj".to_string()).unwrap();
+    // let object_path = "c:\\temp\\cube.obj";
+    let object_path = "c:\\temp\\teapot.obj";
+    let cube = threed::Object::create_from_file(object_path.to_string()).unwrap();
     //   println!("{cube:?}");
 
     let mut prev = Instant::now();

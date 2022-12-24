@@ -27,22 +27,24 @@ pub struct Point {
 }
 
 pub fn draw_horiz_line(buffer: &mut Vec<u32>, x1: u32, x2: u32, y: u32, colour: u32) {
-    let y = y as usize;
-    let y_offset = (HEIGHT - y - 1) * WIDTH;
+    if check_bounds(x1, x2, y) {
+        let y = y as usize;
+        let y_offset = (HEIGHT - y - 1) * WIDTH;
 
-    let range;
-    if x1 > x2 {
-        range = (x2 as usize)..(x1 as usize);
-    } else {
-        range = (x1 as usize)..(x2 as usize);
-    }
+        let range;
+        if x1 > x2 {
+            range = (x2 as usize)..(x1 as usize);
+        } else {
+            range = (x1 as usize)..(x2 as usize);
+        }
 
-    // This niaive way also seems to be fastest
-    for i in range {
-        let index = y_offset + i;
+        // This niaive way also seems to be fastest
+        for i in range {
+            let index = y_offset + i;
 
-        if index < buffer.len() {
-            buffer[y_offset + i] = colour;
+            if index < buffer.len() {
+                buffer[y_offset + i] = colour;
+            }
         }
     }
 
@@ -119,6 +121,11 @@ pub fn draw_triangle(buffer: &mut Vec<u32>, tri: Tri, colour: u32) {
 
     let num = (sorted_points.0.y as f32) - (sorted_points.2.y as f32);
     let denom = (sorted_points.0.x as f32) - (sorted_points.2.x as f32);
+
+    if denom == 0. {
+        return;
+    }
+
     let gradient_p3_p1 = num / denom;
 
     // y = mx + c
@@ -231,11 +238,23 @@ fn draw_flat_top_triangle(
     for y in range {
         // Drawing a horizontal line
         draw_horiz_line(buffer, from as u32, to as u32, y, colour);
-
         // Every iteration the horizontal line will get longer as it diverges from a single point of p1 --> p2 and p3
         // as gradient_p2_p1  and gradient_p1_p3 are guaranteed to be opposite signs
         from += inverse_gradient_p2_p1;
         to += inverse_gradient_p1_p3;
+    }
+}
+
+fn check_bounds(from: u32, to: u32, y: u32) -> bool {
+    if ((y as usize) < HEIGHT)
+        & ((from as usize) < WIDTH)
+        & (from > 300)
+        & ((to as usize) < WIDTH)
+        & (to > 300)
+    {
+        true
+    } else {
+        false
     }
 }
 
