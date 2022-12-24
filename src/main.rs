@@ -14,6 +14,7 @@ struct Core {
     view_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     proj_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     _cam_pos: threed::vec3,
+    light_dir: threed::vec3,
 }
 
 fn main() {
@@ -37,10 +38,17 @@ fn main() {
 
     let view_mat = threed::create_view_matrix(0., cam_pos);
 
+    let light_dir = threed::vec3 {
+        x: 0.,
+        y: 10.,
+        z: -10.,
+    };
+
     let core = Core {
         view_mat,
         proj_mat,
         _cam_pos: cam_pos,
+        light_dir,
     };
 
     let mut window = Window::new(
@@ -69,6 +77,11 @@ fn main() {
     let mut count = 0;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
+        let len = HEIGHT * WIDTH;
+
+        //Packing for pixel U32 is 0RGB
+        let fill_colour = (59 << 16) + (59 << 8) + 59;
+        buffer[0..len].fill(fill_colour);
         count += 1;
         let now = Instant::now();
         let fps = 1. / (now - prev).as_secs_f32();
@@ -100,19 +113,13 @@ fn main() {
         }
 
         for tri in tris {
-            let light_dir = threed::vec3 {
-                x: 1.,
-                y: 2.,
-                z: 3.,
-            };
-
             let albedo_r = 190u32;
             let albedo_g = 255u32;
             let albedo_b = 136u32;
 
-            //Packing goes BGRA
-            let albedo = (albedo_b << 24) + (albedo_g << 16) + (albedo_r << 8);
-            let colour = threed::calc_tri_illum(light_dir, tri.1, albedo);
+            //Packing goes 0RGB
+            let albedo = (albedo_r << 16) + (albedo_g << 8) + (albedo_b);
+            let colour = threed::calc_tri_illum(core.light_dir, tri.1, albedo);
 
             draw_triangle(&mut buffer, tri.0, colour);
         }

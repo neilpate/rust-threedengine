@@ -392,10 +392,10 @@ pub fn calc_tri_illum(light_dir: vec3, tri_normal: vec3, colour: u32) -> u32 {
 
     let new_colour = dp.max(0.01);
 
-    //Packing goes BGRA
-    let r = colour & 0xff00;
-    let g = colour & 0xff0000;
-    let b = colour & 0xff000000;
+    //Packing goes 0RGB
+    let r = colour & 0xff0000;
+    let g = colour & 0xff00;
+    let b = colour & 0xff;
 
     let r = ((r as f32) * new_colour) as u32;
     let g = ((g as f32) * new_colour) as u32;
