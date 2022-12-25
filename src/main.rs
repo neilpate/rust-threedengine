@@ -1,5 +1,5 @@
 use minifb::{Key, Scale, Window, WindowOptions};
-use std::time::Instant;
+use std::{cmp::Ordering, time::Instant};
 
 use crate::raster::{draw_triangle, Point};
 
@@ -76,6 +76,8 @@ fn main() {
     let mut prev = Instant::now();
     let mut count = 0;
 
+    let mut rot_x = 0f32;
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let len = HEIGHT * WIDTH;
 
@@ -84,7 +86,12 @@ fn main() {
         buffer[0..len].fill(fill_colour);
         count += 1;
         let now = Instant::now();
-        let fps = 1. / (now - prev).as_secs_f32();
+        let delta_time = (now - prev).as_secs_f32();
+
+        let fps = 1. / delta_time;
+
+        let degrees_per_second = 360.;
+        rot_x += delta_time * degrees_per_second;
 
         if count > 100 {
             count = 0;
@@ -112,6 +119,18 @@ fn main() {
             }
         }
 
+        tris.sort_by(|a, b| {
+            let a_z = a.0.p1.z + a.0.p2.z + a.0.p3.z;
+            let b_z = b.0.p1.z + b.0.p2.z + b.0.p3.z;
+            if a_z < b_z {
+                Ordering::Less
+            } else if a_z == b_z {
+                Ordering::Equal
+            } else {
+                Ordering::Greater
+            }
+        });
+
         for tri in tris {
             let albedo_r = 190u32;
             let albedo_g = 255u32;
@@ -123,7 +142,6 @@ fn main() {
 
             draw_triangle(&mut buffer, tri.0, colour);
         }
-
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
     }
 }
@@ -166,19 +184,19 @@ fn process_tri(
         let p1 = Point {
             x: tri.v1.x as u32,
             y: tri.v1.y as u32,
-            z: tri.v1.z as i32,
+            z: (tri.v1.z * 1000.) as i32,
         };
 
         let p2 = Point {
             x: tri.v2.x as u32,
             y: tri.v2.y as u32,
-            z: tri.v2.z as i32,
+            z: (tri.v2.z * 1000.) as i32,
         };
 
         let p3 = Point {
             x: tri.v3.x as u32,
             y: tri.v3.y as u32,
-            z: tri.v3.z as i32,
+            z: (tri.v3.z * 1000.) as i32,
         };
 
         Some((raster::Tri { p1, p2, p3 }, normal))
