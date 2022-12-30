@@ -23,7 +23,7 @@ impl Object {
 pub struct Point {
     pub x: u32,
     pub y: u32,
-    pub z: i32,
+    pub z: f32,
 }
 
 pub fn draw_horiz_line(buffer: &mut Vec<u32>, x1: u32, x2: u32, y: u32, colour: u32) {
@@ -256,9 +256,9 @@ fn check_bounds(from: u32, to: u32, y: u32) -> bool {
 
 #[test]
 fn test_sort_points_1() {
-    let p1 = Point { x: 0, y: 0, z: 0 };
-    let p2 = Point { x: 0, y: 1, z: 0 };
-    let p3 = Point { x: 0, y: 2, z: 0 };
+    let p1 = Point { x: 0, y: 0, z: 0. };
+    let p2 = Point { x: 0, y: 1, z: 0. };
+    let p3 = Point { x: 0, y: 2, z: 0. };
 
     let expected = (p3, p2, p1);
 
@@ -269,9 +269,17 @@ fn test_sort_points_1() {
 
 #[test]
 fn test_sort_points_2() {
-    let p1 = Point { x: 0, y: 100, z: 0 };
-    let p2 = Point { x: 0, y: 50, z: 0 };
-    let p3 = Point { x: 0, y: 200, z: 0 };
+    let p1 = Point {
+        x: 0,
+        y: 100,
+        z: 0.,
+    };
+    let p2 = Point { x: 0, y: 50, z: 0. };
+    let p3 = Point {
+        x: 0,
+        y: 200,
+        z: 0.,
+    };
 
     let expected = (p3, p1, p2);
 

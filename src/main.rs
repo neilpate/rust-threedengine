@@ -1,5 +1,8 @@
 use minifb::{Key, Scale, Window, WindowOptions};
-use std::{cmp::Ordering, time::Instant};
+use std::{
+    cmp::Ordering,
+    time::{Duration, Instant},
+};
 
 use crate::raster::{draw_triangle, Point};
 
@@ -17,7 +20,7 @@ struct Core {
     light_dir: threed::vec3,
 }
 
-fn main() {
+fn init() -> Core {
     let screen = threed::Screen {
         width: 800,
         height: 600,
@@ -44,12 +47,16 @@ fn main() {
         z: -10.,
     };
 
-    let core = Core {
+    Core {
         view_mat,
         proj_mat,
         _cam_pos: cam_pos,
         light_dir,
-    };
+    }
+}
+
+fn main() {
+    let core = init();
 
     let mut window = Window::new(
         "3D Renderer",
@@ -100,21 +107,21 @@ fn main() {
 
         prev = now;
 
-        let rot_x_mat = threed::create_x_rotation_matrix(-25.);
-        let rot_y_mat = threed::create_y_rotation_matrix(50.);
-        let rot_z_mat = threed::create_z_rotation_matrix(80.);
+        let rot_x_mat = threed::create_x_rotation_matrix(0.);
+        let rot_y_mat = threed::create_y_rotation_matrix(0.);
+        let rot_z_mat = threed::create_z_rotation_matrix(0.);
         let trans_mat = threed::create_translation_matrix(0., 0., 0.);
 
         let mut tris: Vec<(raster::Tri, threed::vec3)> = Vec::new();
         //  let mut new_obj = raster::Object::new(tris);
 
-        //for i in 0..1 {
-        //    let tri = &cube.tris[i];
+        // for i in 0..3 {
+        // let tri = &cube.tris[i];
         for tri in &cube.tris {
             let proc_tri = process_tri(&core, tri, &rot_z_mat, &rot_y_mat, &rot_x_mat, &trans_mat);
 
             match proc_tri {
-                Some(tri) => tris.push(tri),
+                Some(tri2) => tris.push(tri2),
                 None => (),
             }
         }
@@ -158,11 +165,21 @@ fn process_tri(
 
     let normal = threed::normal(&tri);
     if normal.z <= 0. {
+        let now = Instant::now();
+        let now2 = now.elapsed().as_secs_f32();
+
+        // println!("Got here {now2}");
         tri.v1 = threed::mult_vec3_mat4(tri.v1, &core.view_mat);
 
+        // let tmp_v1 = &tri.v1;
+        // println!("{tmp_v1:?}");
         tri.v1 = threed::mult_vec3_mat4(tri.v1, &core.proj_mat);
+        // let tmp_v1 = &tri.v1;
+        // println!("{tmp_v1:?}");
+
         tri.v2 = threed::mult_vec3_mat4(tri.v2, &core.view_mat);
         tri.v2 = threed::mult_vec3_mat4(tri.v2, &core.proj_mat);
+
         tri.v3 = threed::mult_vec3_mat4(tri.v3, &core.view_mat);
         tri.v3 = threed::mult_vec3_mat4(tri.v3, &core.proj_mat);
 
@@ -170,33 +187,39 @@ fn process_tri(
         tri.v1.x *= 0.5 * (WIDTH as f32);
         tri.v1.y += 1.;
         tri.v1.y *= 0.5 * (HEIGHT as f32);
+        tri.v1.z += 1.;
+        tri.v1.z *= 0.5;
 
         tri.v2.x += 1.;
         tri.v2.x *= 0.5 * (WIDTH as f32);
         tri.v2.y += 1.;
         tri.v2.y *= 0.5 * (HEIGHT as f32);
+        tri.v2.z += 1.;
+        tri.v2.z *= 0.5;
 
         tri.v3.x += 1.;
         tri.v3.x *= 0.5 * (WIDTH as f32);
         tri.v3.y += 1.;
         tri.v3.y *= 0.5 * (HEIGHT as f32);
+        tri.v3.z += 1.;
+        tri.v3.z *= 0.5;
 
         let p1 = Point {
             x: tri.v1.x as u32,
             y: tri.v1.y as u32,
-            z: (tri.v1.z * 1000.) as i32,
+            z: tri.v1.z,
         };
 
         let p2 = Point {
             x: tri.v2.x as u32,
             y: tri.v2.y as u32,
-            z: (tri.v2.z * 1000.) as i32,
+            z: tri.v2.z,
         };
 
         let p3 = Point {
             x: tri.v3.x as u32,
             y: tri.v3.y as u32,
-            z: (tri.v3.z * 1000.) as i32,
+            z: tri.v3.z,
         };
 
         Some((raster::Tri { p1, p2, p3 }, normal))
