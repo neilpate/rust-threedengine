@@ -115,7 +115,8 @@ fn main() {
         let mut tris: Vec<(raster::Tri, threed::vec3)> = Vec::new();
         //  let mut new_obj = raster::Object::new(tris);
 
-        // for i in 0..3 {
+        // let tri = &cube.tris[10];
+        // for i in 0..5 {
         // let tri = &cube.tris[i];
         for tri in &cube.tris {
             let proc_tri = process_tri(&core, tri, &rot_z_mat, &rot_y_mat, &rot_x_mat, &trans_mat);
@@ -126,17 +127,17 @@ fn main() {
             }
         }
 
-        tris.sort_by(|a, b| {
-            let a_z = a.0.p1.z + a.0.p2.z + a.0.p3.z;
-            let b_z = b.0.p1.z + b.0.p2.z + b.0.p3.z;
-            if a_z < b_z {
-                Ordering::Less
-            } else if a_z == b_z {
-                Ordering::Equal
-            } else {
-                Ordering::Greater
-            }
-        });
+        // tris.sort_by(|a, b| {
+        //     let a_z = a.0.p1.z + a.0.p2.z + a.0.p3.z;
+        //     let b_z = b.0.p1.z + b.0.p2.z + b.0.p3.z;
+        //     if a_z < b_z {
+        //         Ordering::Less
+        //     } else if a_z == b_z {
+        //         Ordering::Equal
+        //     } else {
+        //         Ordering::Greater
+        //     }
+        // });
 
         for tri in tris {
             let albedo_r = 190u32;
@@ -148,6 +149,7 @@ fn main() {
             let colour = threed::calc_tri_illum(core.light_dir, tri.1, albedo);
 
             draw_triangle(&mut buffer, tri.0, colour);
+            // draw_triangle(&mut buffer, tri.0, 1234567);
         }
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
     }
@@ -164,7 +166,10 @@ fn process_tri(
     let mut tri = transform_tri(tri, rot_z_mat, rot_y_mat, rot_x_mat, trans_mat);
 
     let normal = threed::normal(&tri);
+
+    // println!("{normal:?}");
     if normal.z <= 0. {
+        // println!("got here");
         let now = Instant::now();
         let now2 = now.elapsed().as_secs_f32();
 
@@ -205,20 +210,20 @@ fn process_tri(
         tri.v3.z *= 0.5;
 
         let p1 = Point {
-            x: tri.v1.x as u32,
-            y: tri.v1.y as u32,
+            x: tri.v1.x.round() as u32,
+            y: tri.v1.y.round() as u32,
             z: tri.v1.z,
         };
 
         let p2 = Point {
-            x: tri.v2.x as u32,
-            y: tri.v2.y as u32,
+            x: tri.v2.x.round() as u32,
+            y: tri.v2.y.round() as u32,
             z: tri.v2.z,
         };
 
         let p3 = Point {
-            x: tri.v3.x as u32,
-            y: tri.v3.y as u32,
+            x: tri.v3.x.round() as u32,
+            y: tri.v3.y.round() as u32,
             z: tri.v3.z,
         };
 

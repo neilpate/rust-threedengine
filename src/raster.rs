@@ -3,6 +3,7 @@ use std::mem;
 use crate::HEIGHT;
 use crate::WIDTH;
 
+#[derive(Debug)]
 pub struct Tri {
     pub p1: Point,
     pub p2: Point,
@@ -106,6 +107,8 @@ fn sort_points_by_y(p1: Point, p2: Point, p3: Point) -> (Point, Point, Point) {
 ///
 ///
 pub fn draw_triangle(buffer: &mut Vec<u32>, tri: Tri, colour: u32) {
+    // println!("Drawing triangle: {tri:?}");
+
     // Goal is to calculate p4
     // Then draw the flat topped triangle and flat bottomed triangle
 
@@ -123,21 +126,26 @@ pub fn draw_triangle(buffer: &mut Vec<u32>, tri: Tri, colour: u32) {
     let num = (sorted_points.0.y as f32) - (sorted_points.2.y as f32);
     let denom = (sorted_points.0.x as f32) - (sorted_points.2.x as f32);
 
+    let p4x;
+
     if denom == 0. {
-        return;
+        //p1 and p3 are in a vertical line, so the gradient is infinite
+        //p4x has the same value as p1 and p3
+
+        p4x = tri.p1.x;
+    } else {
+        let gradient_p3_p1 = num / denom;
+
+        // y = mx + c
+        // c = y - mx
+
+        // Can use either p1 or p3 to calculate c, pick p1 for no good reason
+        let c = (sorted_points.0.y as f32) - gradient_p3_p1 * (sorted_points.0.x as f32);
+
+        // x = (y -c)/m
+
+        p4x = (((p4y as f32) - c) / gradient_p3_p1) as u32;
     }
-
-    let gradient_p3_p1 = num / denom;
-
-    // y = mx + c
-    // c = y - mx
-
-    // Can use either p1 or p3 to calculate c, pick p1 for no good reason
-    let c = (sorted_points.0.y as f32) - gradient_p3_p1 * (sorted_points.0.x as f32);
-
-    // x = (y -c)/m
-
-    let p4x = (((p4y as f32) - c) / gradient_p3_p1) as u32;
 
     draw_flat_bottom_triangle(buffer, sorted_points.0, sorted_points.1.x, p4x, p4y, colour);
     draw_flat_top_triangle(buffer, sorted_points.2, sorted_points.1.x, p4x, p4y, colour);
@@ -163,6 +171,8 @@ fn draw_flat_bottom_triangle(
     p23y: u32,
     colour: u32,
 ) {
+    //  println!("Drawing flat bottom triangle: p1:{p1:?}, p2x:{p2x}, p3x:{p3x}, p23y:{p23y}");
+
     // First calculate the inverse gradient of line p2 --> p1
     // Recall the gradient is Δy/Δx
     let mut num = (p2x as f32) - (p1.x as f32);
@@ -215,6 +225,8 @@ fn draw_flat_top_triangle(
     p23y: u32,
     colour: u32,
 ) {
+    //println!("Drawing flat topped triangle: p1:{p1:?}, p2x:{p2x}, p3x:{p3x}, p23y:{p23y}");
+
     // First calculate the inverse gradient of line p2 --> p1
     // Recall the gradient is Δy/Δx
     let mut num = (p2x as f32) - (p1.x as f32);
