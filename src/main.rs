@@ -115,7 +115,7 @@ fn main() {
         let mut tris: Vec<(raster::Tri, threed::vec3)> = Vec::new();
         //  let mut new_obj = raster::Object::new(tris);
 
-        // let tri = &cube.tris[10];
+        // let tri = &cube.tris[11];
         // for i in 0..5 {
         // let tri = &cube.tris[i];
         for tri in &cube.tris {
@@ -127,17 +127,17 @@ fn main() {
             }
         }
 
-        // tris.sort_by(|a, b| {
-        //     let a_z = a.0.p1.z + a.0.p2.z + a.0.p3.z;
-        //     let b_z = b.0.p1.z + b.0.p2.z + b.0.p3.z;
-        //     if a_z < b_z {
-        //         Ordering::Less
-        //     } else if a_z == b_z {
-        //         Ordering::Equal
-        //     } else {
-        //         Ordering::Greater
-        //     }
-        // });
+        tris.sort_by(|a, b| {
+            let a_z = a.0.p1.z + a.0.p2.z + a.0.p3.z;
+            let b_z = b.0.p1.z + b.0.p2.z + b.0.p3.z;
+            if a_z < b_z {
+                Ordering::Less
+            } else if a_z == b_z {
+                Ordering::Equal
+            } else {
+                Ordering::Greater
+            }
+        });
 
         for tri in tris {
             let albedo_r = 190u32;

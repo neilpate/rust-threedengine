@@ -107,7 +107,7 @@ fn sort_points_by_y(p1: Point, p2: Point, p3: Point) -> (Point, Point, Point) {
 ///
 ///
 pub fn draw_triangle(buffer: &mut Vec<u32>, tri: Tri, colour: u32) {
-    println!("Drawing triangle: {tri:?}");
+    // println!("Drawing triangle: {tri:?}");
 
     // Goal is to calculate p4
     // Then draw the flat topped triangle and flat bottomed triangle
@@ -115,7 +115,7 @@ pub fn draw_triangle(buffer: &mut Vec<u32>, tri: Tri, colour: u32) {
     // first sort the points so that p1.y > p2.y > p3.y
 
     let sorted_points = sort_points_by_y(tri.p1, tri.p2, tri.p3);
-    println!("Sorted points: {sorted_points:?}");
+    // println!("Sorted points: {sorted_points:?}");
 
     // Now we need to find p4
     // Obviously it shares a y values with p2
@@ -172,7 +172,7 @@ fn draw_flat_bottom_triangle(
     p23y: u32,
     colour: u32,
 ) {
-    println!("Drawing flat bottom triangle: p1:{p1:?}, p2x:{p2x}, p3x:{p3x}, p23y:{p23y}");
+    // println!("Drawing flat bottom triangle: p1:{p1:?}, p2x:{p2x}, p3x:{p3x}, p23y:{p23y}");
 
     // First calculate the inverse gradient of line p2 --> p1
     // Recall the gradient is Δy/Δx
@@ -226,7 +226,7 @@ fn draw_flat_top_triangle(
     p23y: u32,
     colour: u32,
 ) {
-    println!("Drawing flat topped triangle: p1:{p1:?}, p2x:{p2x}, p3x:{p3x}, p23y:{p23y}");
+    // println!("Drawing flat topped triangle: p1:{p1:?}, p2x:{p2x}, p3x:{p3x}, p23y:{p23y}");
 
     // First calculate the inverse gradient of line p2 --> p1
     // Recall the gradient is Δy/Δx
