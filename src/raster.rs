@@ -10,15 +10,15 @@ pub struct Tri {
     pub p3: Point,
 }
 
-pub struct Object {
-    pub tris: Vec<Tri>,
-}
+// pub struct Object {
+//     pub tris: Vec<Tri>,
+// }
 
-impl Object {
-    pub fn new(tris: Vec<Tri>) -> Self {
-        Self { tris }
-    }
-}
+// impl Object {
+//     pub fn _new(tris: Vec<Tri>) -> Self {
+//         Self { tris }
+//     }
+// }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Point {

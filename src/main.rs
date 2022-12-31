@@ -170,9 +170,6 @@ fn process_tri(
     let normal = threed::normal(&tri);
 
     if normal.z <= 0. {
-        let now = Instant::now();
-        let now2 = now.elapsed().as_secs_f32();
-
         tri.v1 = threed::mult_vec3_mat4(tri.v1, &core.view_mat);
         tri.v1 = threed::mult_vec3_mat4(tri.v1, &core.proj_mat);
 
