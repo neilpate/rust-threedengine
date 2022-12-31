@@ -386,9 +386,9 @@ fn cross_product(v1: vec3, v2: vec3) -> vec3 {
     vec3 { x, y, z }
 }
 
-pub fn calc_tri_illum(light_dir: vec3, tri_normal: vec3, colour: u32) -> u32 {
+pub fn calc_tri_illum(light_dir: vec3, tri_normal: &vec3, colour: u32) -> u32 {
     let norm = normalise_vec(light_dir);
-    let dp = dot_product(norm, tri_normal);
+    let dp = dot_product(norm, *tri_normal);
 
     let new_colour = dp.max(0.01);
 
@@ -420,7 +420,7 @@ fn test_calc_tri_illum() {
         z: -1.,
     };
 
-    let actual = calc_tri_illum(light_dir, tri_normal, 1234567);
+    let actual = calc_tri_illum(light_dir, &tri_normal, 1234567);
 
     assert_eq!(expected, actual);
 }
@@ -441,7 +441,7 @@ fn test_calc_tri_illum2() {
         z: -0.582563,
     };
 
-    let actual = calc_tri_illum(light_dir, tri_normal, 1234567);
+    let actual = calc_tri_illum(light_dir, &tri_normal, 1234567);
 
     assert_eq!(expected, actual);
 }

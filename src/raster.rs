@@ -106,7 +106,7 @@ fn sort_points_by_y(p1: Point, p2: Point, p3: Point) -> (Point, Point, Point) {
 /// /// (0,0)---------------------> +x
 ///
 ///
-pub fn draw_triangle(buffer: &mut Vec<u32>, tri: Tri, colour: u32) {
+pub fn draw_triangle(buffer: &mut Vec<u32>, tri: &Tri, colour: u32) {
     // println!("Drawing triangle: {tri:?}");
 
     // Goal is to calculate p4

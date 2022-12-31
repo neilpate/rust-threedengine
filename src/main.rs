@@ -97,7 +97,7 @@ fn main() {
 
         let fps = 1. / delta_time;
 
-        let degrees_per_second = 360.;
+        let degrees_per_second = 36.;
         rot_x += delta_time * degrees_per_second;
 
         if count > 100 {
@@ -107,9 +107,9 @@ fn main() {
 
         prev = now;
 
-        let rot_x_mat = threed::create_x_rotation_matrix(0.);
-        let rot_y_mat = threed::create_y_rotation_matrix(0.);
-        let rot_z_mat = threed::create_z_rotation_matrix(0.);
+        let rot_x_mat = threed::create_x_rotation_matrix(rot_x);
+        let rot_y_mat = threed::create_y_rotation_matrix(-30.);
+        let rot_z_mat = threed::create_z_rotation_matrix(15.);
         let trans_mat = threed::create_translation_matrix(0., 0., 0.);
 
         let mut tris: Vec<(raster::Tri, threed::vec3)> = Vec::new();
@@ -127,30 +127,38 @@ fn main() {
             }
         }
 
-        tris.sort_by(|a, b| {
-            let a_z = a.0.p1.z + a.0.p2.z + a.0.p3.z;
-            let b_z = b.0.p1.z + b.0.p2.z + b.0.p3.z;
-            if a_z < b_z {
-                Ordering::Less
-            } else if a_z == b_z {
-                Ordering::Equal
-            } else {
-                Ordering::Greater
-            }
-        });
+        let mut z_vals = Vec::new();
+        for tri in &tris {
+            let z = tri.0.p1.z + tri.0.p2.z + tri.0.p3.z;
+            z_vals.push((z * 1000000.) as u32);
+        }
 
-        for tri in tris {
+        // println!("z vals: {z_vals:?}");
+
+        let mut indices = (0..tris.len()).collect::<Vec<_>>();
+        indices.sort_by_key(|&i| z_vals[i]);
+        indices.reverse();
+
+        // println!("Indices: {indices:?}");
+
+        let range = 0..indices.len();
+
+        //for tri in tris {
+        for index in range {
+            let tri = &tris[indices[index]];
+            // println!("Sorted tri: {tri:?}");
             let albedo_r = 190u32;
             let albedo_g = 255u32;
             let albedo_b = 136u32;
 
             //Packing goes 0RGB
             let albedo = (albedo_r << 16) + (albedo_g << 8) + (albedo_b);
-            let colour = threed::calc_tri_illum(core.light_dir, tri.1, albedo);
+            let colour = threed::calc_tri_illum(core.light_dir, &tri.1, albedo);
 
-            draw_triangle(&mut buffer, tri.0, colour);
+            draw_triangle(&mut buffer, &tri.0, colour);
             // draw_triangle(&mut buffer, tri.0, 1234567);
         }
+
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
     }
 }
