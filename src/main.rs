@@ -1,8 +1,5 @@
 use minifb::{Key, Scale, Window, WindowOptions};
-use std::{
-    cmp::Ordering,
-    time::{Duration, Instant},
-};
+use std::time::Instant;
 
 use crate::raster::{draw_triangle, Point};
 
@@ -70,13 +67,13 @@ fn main() {
     )
     .expect("Unable to create window");
 
-    // Limit to max ~60 fps update rate
-    //  window.limit_update_rate(Some(std::time::Duration::from_millis(10)));
+    // Limit to max ~100 fps update rate
+    // window.limit_update_rate(Some(std::time::Duration::from_millis(10)));
 
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    let object_path = "c:\\temp\\cube.obj";
-    // let object_path = "c:\\temp\\teapot.obj";
+    // let object_path = "c:\\temp\\cube.obj";
+    let object_path = "c:\\temp\\teapot.obj";
     let cube = threed::Object::create_from_file(object_path.to_string()).unwrap();
     //   println!("{cube:?}");
 
@@ -141,10 +138,7 @@ fn main() {
 
         // println!("Indices: {indices:?}");
 
-        let range = 0..indices.len();
-
-        //for tri in tris {
-        for index in range {
+        for index in 0..tris.len() {
             let tri = &tris[indices[index]];
             // println!("Sorted tri: {tri:?}");
             let albedo_r = 190u32;
@@ -175,20 +169,12 @@ fn process_tri(
 
     let normal = threed::normal(&tri);
 
-    // println!("{normal:?}");
     if normal.z <= 0. {
-        // println!("got here");
         let now = Instant::now();
         let now2 = now.elapsed().as_secs_f32();
 
-        // println!("Got here {now2}");
         tri.v1 = threed::mult_vec3_mat4(tri.v1, &core.view_mat);
-
-        // let tmp_v1 = &tri.v1;
-        // println!("{tmp_v1:?}");
         tri.v1 = threed::mult_vec3_mat4(tri.v1, &core.proj_mat);
-        // let tmp_v1 = &tri.v1;
-        // println!("{tmp_v1:?}");
 
         tri.v2 = threed::mult_vec3_mat4(tri.v2, &core.view_mat);
         tri.v2 = threed::mult_vec3_mat4(tri.v2, &core.proj_mat);
