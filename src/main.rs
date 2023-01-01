@@ -74,13 +74,14 @@ fn main() {
 
     // let object_path = "c:\\temp\\cube.obj";
     let object_path = "c:\\temp\\teapot.obj";
+    // let object_path = "c:\\temp\\spaceship.obj";
     let cube = threed::Object::create_from_file(object_path.to_string()).unwrap();
     //   println!("{cube:?}");
 
     let mut prev = Instant::now();
     let mut count = 0;
 
-    let mut rot_x = 0f32;
+    let mut rot_x = 270f32;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let len = HEIGHT * WIDTH;
@@ -95,6 +96,7 @@ fn main() {
         let fps = 1. / delta_time;
 
         let degrees_per_second = 36.;
+
         rot_x += delta_time * degrees_per_second;
 
         if count > 100 {
@@ -105,9 +107,9 @@ fn main() {
         prev = now;
 
         let rot_x_mat = threed::create_x_rotation_matrix(rot_x);
-        let rot_y_mat = threed::create_y_rotation_matrix(-30.);
-        let rot_z_mat = threed::create_z_rotation_matrix(15.);
-        let trans_mat = threed::create_translation_matrix(0., 0., 0.);
+        let rot_y_mat = threed::create_y_rotation_matrix(15.);
+        let rot_z_mat = threed::create_z_rotation_matrix(-15.);
+        let trans_mat = threed::create_translation_matrix(0., 0., -7.);
 
         let mut tris: Vec<(raster::Tri, threed::vec3)> = Vec::new();
         //  let mut new_obj = raster::Object::new(tris);
@@ -126,7 +128,7 @@ fn main() {
 
         let mut z_vals = Vec::new();
         for tri in &tris {
-            let z = tri.0.p1.z + tri.0.p2.z + tri.0.p3.z;
+            let z = (tri.0.p1.z + tri.0.p2.z + tri.0.p3.z) / 3.;
             z_vals.push((z * 1000000.) as u32);
         }
 
@@ -149,8 +151,9 @@ fn main() {
             let albedo = (albedo_r << 16) + (albedo_g << 8) + (albedo_b);
             let colour = threed::calc_tri_illum(core.light_dir, &tri.1, albedo);
 
+            //  if (index == 4) | (index == 5) {
             draw_triangle(&mut buffer, &tri.0, colour);
-            // draw_triangle(&mut buffer, tri.0, 1234567);
+            //  }
         }
 
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
