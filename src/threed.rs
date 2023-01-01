@@ -6,6 +6,8 @@ use ndarray::arr2;
 use ndarray::prelude::*;
 use ndarray::Array;
 
+use crate::colour::*;
+
 use float_eq::{assert_float_eq, derive_float_eq, float_eq};
 
 pub struct Screen {
@@ -386,27 +388,18 @@ fn cross_product(v1: vec3, v2: vec3) -> vec3 {
     vec3 { x, y, z }
 }
 
-pub fn calc_tri_illum(light_dir: vec3, tri_normal: &vec3, colour: u32) -> u32 {
+pub fn calc_tri_illum(light_dir: vec3, tri_normal: &vec3, colour: Colour) -> Colour {
     let norm = normalise_vec(light_dir);
     let dp = dot_product(norm, *tri_normal);
 
-    let new_colour = dp.max(0.01);
-
-    //Packing goes 0RGB
-    let r = (colour & 0xff0000) >> 16;
-    let g = (colour & 0xff00) >> 8;
-    let b = colour & 0xff;
-
-    let r = ((r as f32) * new_colour) as u32;
-    let g = ((g as f32) * new_colour) as u32;
-    let b = ((b as f32) * new_colour) as u32;
-
-    (r << 16) + (g << 8) + b
+    let factor = dp.max(0.01);
+    colour.scale(factor)
 }
 
 #[test]
 fn test_calc_tri_illum() {
-    let expected = 961644u32;
+    // let expected = 961644u32;
+    let expected = Colour::from_u32(961644);
 
     let light_dir = vec3 {
         x: 1.,
@@ -420,14 +413,16 @@ fn test_calc_tri_illum() {
         z: -1.,
     };
 
-    let actual = calc_tri_illum(light_dir, &tri_normal, 1234567);
+    let colour = Colour::from_u32(1234567);
+
+    let actual = calc_tri_illum(light_dir, &tri_normal, colour);
 
     assert_eq!(expected, actual);
 }
 
 #[test]
 fn test_calc_tri_illum2() {
-    let expected = 2766878u32;
+    let expected = Colour::from_u32(2766878);
 
     let light_dir = vec3 {
         x: 0.,
@@ -441,7 +436,9 @@ fn test_calc_tri_illum2() {
         z: -0.582563,
     };
 
-    let actual = calc_tri_illum(light_dir, &tri_normal, 1234567);
+    let colour = Colour::from_u32(1234567);
+
+    let actual = calc_tri_illum(light_dir, &tri_normal, colour);
 
     assert_eq!(expected, actual);
 }

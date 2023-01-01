@@ -3,9 +3,13 @@ use std::time::Instant;
 
 use crate::raster::{draw_triangle, Point};
 
+use crate::colour::*;
+
 mod threed;
 
 mod raster;
+
+mod colour;
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
@@ -139,17 +143,13 @@ fn main() {
 
         for index in 0..tris.len() {
             let tri = &tris[indices[index]];
-            // println!("Sorted tri: {tri:?}");
-            let albedo_r = 190u32;
-            let albedo_g = 255u32;
-            let albedo_b = 136u32;
 
-            //Packing goes 0RGB
-            let albedo = (albedo_r << 16) + (albedo_g << 8) + (albedo_b);
-            let colour = threed::calc_tri_illum(core.light_dir, &tri.1, albedo);
+            let colour = Colour::new(190, 255, 136);
+
+            let colour = threed::calc_tri_illum(core.light_dir, &tri.1, colour);
 
             //  if (index == 4) | (index == 5) {
-            draw_triangle(&mut buffer, &tri.0, colour);
+            draw_triangle(&mut buffer, &tri.0, colour.as_0rgb());
             //  }
         }
 
