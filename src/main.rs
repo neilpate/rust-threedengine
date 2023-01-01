@@ -76,7 +76,6 @@ fn main() {
     let object_path = "c:\\temp\\teapot.obj";
     // let object_path = "c:\\temp\\spaceship.obj";
     let cube = threed::Object::create_from_file(object_path.to_string()).unwrap();
-    //   println!("{cube:?}");
 
     let mut prev = Instant::now();
     let mut count = 0;
@@ -128,11 +127,9 @@ fn main() {
 
         let mut z_vals = Vec::new();
         for tri in &tris {
-            let z = (tri.0.p1.z + tri.0.p2.z + tri.0.p3.z) / 3.;
-            z_vals.push((z * 1000000.) as u32);
+            let z = tri.0.p1.z + tri.0.p2.z + tri.0.p3.z;
+            z_vals.push((z * 1000000.) as u32); //This weird multiplication is just to be able to sort by z
         }
-
-        // println!("z vals: {z_vals:?}");
 
         let mut indices = (0..tris.len()).collect::<Vec<_>>();
         indices.sort_by_key(|&i| z_vals[i]);

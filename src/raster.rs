@@ -33,13 +33,12 @@ pub fn draw_horiz_line(buffer: &mut Vec<u32>, x1: u32, x2: u32, y: u32, colour: 
         let y_offset = (HEIGHT - y - 1) * WIDTH;
 
         let range;
+        //Note in the above range we must include the final value
         if x1 > x2 {
             range = x2 as usize..=x1 as usize;
         } else {
             range = x1 as usize..=x2 as usize;
         }
-
-        //Note in the above range we include the final value
 
         // println!("Range: {range:?}");
 
@@ -201,13 +200,7 @@ fn draw_flat_bottom_triangle(
     // Loop over this range
     for y in range {
         // Drawing a horizontal line
-        draw_horiz_line(
-            buffer,
-            (from.round() as u32) + 0,
-            (to.round() as u32) + 0,
-            y,
-            colour,
-        );
+        draw_horiz_line(buffer, from.round() as u32, to.round() as u32, y, colour);
 
         // Every iteration the horizontal line will get a bit shorter
         // as gradient_p2_p1 and gradient_p1_p3 are guaranteed to be opposite directions
@@ -261,13 +254,7 @@ fn draw_flat_top_triangle(
     // Loop over this range
     for y in range {
         // Drawing a horizontal line
-        draw_horiz_line(
-            buffer,
-            (from.round() as u32) + 0,
-            (to.round() as u32) + 0,
-            y,
-            colour,
-        );
+        draw_horiz_line(buffer, from.round() as u32, to.round() as u32, y, colour);
         // Every iteration the horizontal line will get longer as it diverges from a single point of p1 --> p2 and p3
         // as gradient_p2_p1  and gradient_p1_p3 are guaranteed to be opposite signs
         from += inverse_gradient_p2_p1;
