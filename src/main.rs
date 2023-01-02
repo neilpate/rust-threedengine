@@ -89,25 +89,18 @@ fn main() {
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let len = HEIGHT * WIDTH;
 
-        //Packing for pixel U32 is 0RGB
-        let fill_colour = (59 << 16) + (59 << 8) + 59;
-        buffer[0..len].fill(fill_colour);
-        count += 1;
+        let fill_colour = Colour::new(59, 59, 59);
+
+        buffer[0..len].fill(fill_colour.as_0rgb());
+
         let now = Instant::now();
         let delta_time = (now - prev).as_secs_f32();
-
+        prev = now;
         let fps = 1. / delta_time;
 
         let degrees_per_second = 36.;
 
         rot_x += delta_time * degrees_per_second;
-
-        if count > 100 {
-            count = 0;
-            println!("FPS: {fps}");
-        }
-
-        prev = now;
 
         let rot_x_mat = threed::create_x_rotation_matrix(rot_x);
         let rot_y_mat = threed::create_y_rotation_matrix(15.);
@@ -139,8 +132,6 @@ fn main() {
         indices.sort_by_key(|&i| z_vals[i]);
         indices.reverse();
 
-        // println!("Indices: {indices:?}");
-
         for index in 0..tris.len() {
             let tri = &tris[indices[index]];
 
@@ -154,6 +145,14 @@ fn main() {
         }
 
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+
+        count += 1;
+        if count > 100 {
+            count = 0;
+            println!("FPS: {fps}");
+            let vis_tris = tris.len();
+            println!("Visible tris: {vis_tris}");
+        }
     }
 }
 
