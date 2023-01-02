@@ -265,7 +265,7 @@ pub fn create_view_matrix(cam_rotation: f32, cam_pos: vec3) -> Array2<f32> {
 
 fn point_at(pos: vec3, target: vec3, up: vec3) -> Array2<f32> {
     let new_forward = target - pos;
-    let new_forward_norm = normalise_vec(new_forward);
+    let new_forward_norm = normalise_vec(&new_forward);
 
     let up_dot_fwd = dot_product(up, new_forward_norm);
 
@@ -276,7 +276,7 @@ fn point_at(pos: vec3, target: vec3, up: vec3) -> Array2<f32> {
     };
 
     let new_up = up - a;
-    let new_up_norm = normalise_vec(new_up);
+    let new_up_norm = normalise_vec(&new_up);
 
     let new_right = cross_product(new_up_norm, new_forward_norm);
     // let new_right_norm = normalise_vec(new_right);
@@ -351,7 +351,7 @@ pub fn quick_invert_mat4(mat: Array2<f32>) -> Array2<f32> {
     out
 }
 
-fn normalise_vec(vec: vec3) -> vec3 {
+fn normalise_vec(vec: &vec3) -> vec3 {
     let x = vec.x.powf(2.);
     let y = vec.y.powf(2.);
     let z = vec.z.powf(2.);
@@ -373,7 +373,7 @@ pub fn normal(tri: &Tri) -> vec3 {
     let y = (a.z * b.x) - (a.x * b.z);
     let z = (a.x * b.y) - (a.y * b.x);
 
-    normalise_vec(vec3 { x, y, z })
+    normalise_vec(&vec3 { x, y, z })
 }
 
 fn dot_product(v1: vec3, v2: vec3) -> f32 {
@@ -388,7 +388,7 @@ fn cross_product(v1: vec3, v2: vec3) -> vec3 {
     vec3 { x, y, z }
 }
 
-pub fn calc_tri_illum(light_dir: vec3, tri_normal: &vec3, colour: Colour) -> Colour {
+pub fn calc_tri_illum(light_dir: &vec3, tri_normal: &vec3, colour: Colour) -> Colour {
     let norm = normalise_vec(light_dir);
     let dp = dot_product(norm, *tri_normal);
 
@@ -415,7 +415,7 @@ fn test_calc_tri_illum() {
 
     let colour = Colour::from_u32(1234567);
 
-    let actual = calc_tri_illum(light_dir, &tri_normal, colour);
+    let actual = calc_tri_illum(&light_dir, &tri_normal, colour);
 
     assert_eq!(expected, actual);
 }
@@ -438,7 +438,7 @@ fn test_calc_tri_illum2() {
 
     let colour = Colour::from_u32(1234567);
 
-    let actual = calc_tri_illum(light_dir, &tri_normal, colour);
+    let actual = calc_tri_illum(&light_dir, &tri_normal, colour);
 
     assert_eq!(expected, actual);
 }
@@ -587,7 +587,7 @@ fn test_normalise_vec() {
         z: 72.,
     };
 
-    let result = normalise_vec(input);
+    let result = normalise_vec(&input);
 
     assert_float_eq!(expected, result, abs_all <= 0.0001);
 }

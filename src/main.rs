@@ -137,7 +137,7 @@ fn main() {
 
             let colour = Colour::new(190, 255, 136);
 
-            let colour = threed::calc_tri_illum(core.light_dir, &tri.1, colour);
+            let colour = threed::calc_tri_illum(&core.light_dir, &tri.1, colour);
 
             //  if (index == 4) | (index == 5) {
             draw_triangle(&mut buffer, &tri.0, colour.as_0rgb());
