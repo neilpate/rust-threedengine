@@ -76,15 +76,18 @@ fn main() {
 
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    // let object_path = "c:\\temp\\cube.obj";
-    let object_path = "c:\\temp\\teapot.obj";
-    // let object_path = "c:\\temp\\spaceship.obj";
-    let cube = threed::Object::create_from_file(object_path.to_string()).unwrap();
+    let cube_path = "c:\\temp\\cube.obj";
+    let cube = threed::Object::create_from_file(cube_path.to_string()).unwrap();
+
+    let teapot_path = "c:\\temp\\teapot.obj";
+    let teapot = threed::Object::create_from_file(teapot_path.to_string()).unwrap();
+
+    let objects = vec![cube, teapot];
 
     let mut prev = Instant::now();
     let mut count = 0;
 
-    let mut rot_x = 270f32;
+    let mut rot_x = 0f32;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let len = HEIGHT * WIDTH;
@@ -102,23 +105,22 @@ fn main() {
 
         rot_x += delta_time * degrees_per_second;
 
-        let rot_x_mat = threed::create_x_rotation_matrix(rot_x);
-        let rot_y_mat = threed::create_y_rotation_matrix(15.);
-        let rot_z_mat = threed::create_z_rotation_matrix(-15.);
-        let trans_mat = threed::create_translation_matrix(0., 0., -7.);
-
         let mut tris: Vec<(raster::Tri, threed::vec3)> = Vec::new();
-        //  let mut new_obj = raster::Object::new(tris);
 
-        // let tri = &cube.tris[11];
-        // for i in 0..5 {
-        // let tri = &cube.tris[i];
-        for tri in &cube.tris {
-            let proc_tri = process_tri(&core, tri, &rot_z_mat, &rot_y_mat, &rot_x_mat, &trans_mat);
+        for object in &objects {
+            let rot_x_mat = threed::create_x_rotation_matrix(rot_x);
+            let rot_y_mat = threed::create_y_rotation_matrix(15.);
+            let rot_z_mat = threed::create_z_rotation_matrix(-15.);
+            let trans_mat = threed::create_translation_matrix(0., 0., -0.);
 
-            match proc_tri {
-                Some(tri2) => tris.push(tri2),
-                None => (),
+            for tri in &object.tris {
+                let proc_tri =
+                    process_tri(&core, tri, &rot_z_mat, &rot_y_mat, &rot_x_mat, &trans_mat);
+
+                match proc_tri {
+                    Some(tri2) => tris.push(tri2),
+                    None => (),
+                }
             }
         }
 
