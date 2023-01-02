@@ -10,6 +10,30 @@ use crate::colour::*;
 
 use float_eq::{assert_float_eq, derive_float_eq, float_eq};
 
+pub struct Transform {
+    pub position: vec3,
+    pub rotation: vec3,
+}
+
+//#[derive(Debug)]
+pub struct Object {
+    pub name: String,
+    pub tris: Vec<Tri>,
+    pub transform: Transform,
+    pub albedo: Colour,
+}
+
+impl Object {
+    pub fn new(name: String, tris: Vec<Tri>, transform: Transform, albedo: Colour) -> Self {
+        Self {
+            name,
+            tris,
+            transform,
+            albedo,
+        }
+    }
+}
+
 pub struct Screen {
     pub width: i32,
     pub height: i32,
@@ -100,10 +124,6 @@ pub struct Tri {
     pub v2: Vert,
     pub v3: Vert,
 }
-#[derive(Debug)]
-pub struct Object {
-    pub tris: Vec<Tri>,
-}
 
 impl Object {
     fn face_from_string(s: String) -> Option<(usize, usize, usize)> {
@@ -124,7 +144,12 @@ impl Object {
         }
     }
 
-    pub fn create_from_file(obj_path: String) -> Result<Object, io::Error> {
+    pub fn create_from_file(
+        name: String,
+        obj_path: String,
+        transform: Transform,
+        albedo: Colour,
+    ) -> Result<Object, io::Error> {
         let content = fs::read_to_string(obj_path)?;
         //   println!("{content}");
         let lines: Vec<&str> = content.split("\n").collect();
@@ -155,7 +180,12 @@ impl Object {
             mesh.push(Tri { v1, v2, v3 });
         }
 
-        Ok(Object { tris: mesh })
+        Ok(Object {
+            name,
+            tris: mesh,
+            transform,
+            albedo,
+        })
     }
 }
 

@@ -1,5 +1,6 @@
 use minifb::{Key, Scale, Window, WindowOptions};
 use std::time::Instant;
+use threed::{vec3, Transform};
 
 use crate::raster::{draw_triangle, Point};
 
@@ -76,18 +77,12 @@ fn main() {
 
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    let cube_path = "c:\\temp\\cube.obj";
-    let cube = threed::Object::create_from_file(cube_path.to_string()).unwrap();
-
-    let teapot_path = "c:\\temp\\teapot.obj";
-    let teapot = threed::Object::create_from_file(teapot_path.to_string()).unwrap();
-
-    let objects = vec![cube, teapot];
+    let objects = vec![init_cube(), init_teapot()];
 
     let mut prev = Instant::now();
     let mut count = 0;
 
-    let mut rot_x = 0f32;
+    let mut rot_y = 0f32;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let len = HEIGHT * WIDTH;
@@ -103,19 +98,30 @@ fn main() {
 
         let degrees_per_second = 36.;
 
-        rot_x += delta_time * degrees_per_second;
+        rot_y += delta_time * degrees_per_second;
 
-        let mut tris: Vec<(raster::Tri, threed::vec3)> = Vec::new();
+        let mut tris: Vec<(raster::Tri, threed::vec3, Colour)> = Vec::new();
 
         for object in &objects {
-            let rot_x_mat = threed::create_x_rotation_matrix(rot_x);
-            let rot_y_mat = threed::create_y_rotation_matrix(15.);
-            let rot_z_mat = threed::create_z_rotation_matrix(-15.);
-            let trans_mat = threed::create_translation_matrix(0., 0., -0.);
+            let rot_x_mat = threed::create_x_rotation_matrix(object.transform.rotation.x);
+            let rot_y_mat = threed::create_y_rotation_matrix(object.transform.rotation.y + rot_y);
+            let rot_z_mat = threed::create_z_rotation_matrix(object.transform.rotation.z);
+            let trans_mat = threed::create_translation_matrix(
+                object.transform.position.x,
+                object.transform.position.y,
+                object.transform.position.z,
+            );
 
             for tri in &object.tris {
-                let proc_tri =
-                    process_tri(&core, tri, &rot_z_mat, &rot_y_mat, &rot_x_mat, &trans_mat);
+                let proc_tri = process_tri(
+                    &core,
+                    tri,
+                    &rot_z_mat,
+                    &rot_y_mat,
+                    &rot_x_mat,
+                    &trans_mat,
+                    object.albedo,
+                );
 
                 match proc_tri {
                     Some(tri2) => tris.push(tri2),
@@ -137,9 +143,9 @@ fn main() {
         for index in 0..tris.len() {
             let tri = &tris[indices[index]];
 
-            let colour = Colour::new(190, 255, 136);
+            //  let colour = Colour::new(190, 255, 136);
 
-            let colour = threed::calc_tri_illum(&core.light_dir, &tri.1, colour);
+            let colour = threed::calc_tri_illum(&core.light_dir, &tri.1, tri.2);
 
             //  if (index == 4) | (index == 5) {
             draw_triangle(&mut buffer, &tri.0, colour.as_0rgb());
@@ -158,6 +164,42 @@ fn main() {
     }
 }
 
+fn init_cube() -> threed::Object {
+    let path = "c:\\temp\\cube.obj";
+    let position = vec3 {
+        x: 3.,
+        y: 3.,
+        z: 3.,
+    };
+    let rotation = vec3 {
+        x: 45.,
+        y: 45.,
+        z: 45.,
+    };
+    let transform = Transform { position, rotation };
+    let albedo = Colour::new(42, 170, 255);
+    threed::Object::create_from_file("cube".to_string(), path.to_string(), transform, albedo)
+        .unwrap()
+}
+
+fn init_teapot() -> threed::Object {
+    let path = "c:\\temp\\teapot.obj";
+    let position = vec3 {
+        x: -10.,
+        y: 0.,
+        z: 0.,
+    };
+    let rotation = vec3 {
+        x: 0.,
+        y: 0.,
+        z: 0.,
+    };
+    let transform = Transform { position, rotation };
+    let albedo = Colour::new(190, 255, 136);
+    threed::Object::create_from_file("teapot".to_string(), path.to_string(), transform, albedo)
+        .unwrap()
+}
+
 fn process_tri(
     core: &Core,
     tri: &threed::Tri,
@@ -165,7 +207,8 @@ fn process_tri(
     rot_y_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     rot_x_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     trans_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-) -> Option<(raster::Tri, threed::Vert)> {
+    albedo: Colour,
+) -> Option<(raster::Tri, threed::Vert, Colour)> {
     let mut tri = transform_tri(tri, rot_z_mat, rot_y_mat, rot_x_mat, trans_mat);
 
     let normal = threed::normal(&tri);
@@ -219,7 +262,7 @@ fn process_tri(
             z: tri.v3.z,
         };
 
-        Some((raster::Tri { p1, p2, p3 }, normal))
+        Some((raster::Tri { p1, p2, p3 }, normal, albedo))
     } else {
         None
     }
