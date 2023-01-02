@@ -1,6 +1,6 @@
 use minifb::{Key, Scale, Window, WindowOptions};
 use std::time::Instant;
-use threed::{vec3, Transform};
+use threed::*;
 
 use crate::raster::{draw_triangle, Point};
 
@@ -18,32 +18,32 @@ const HEIGHT: usize = 600;
 struct Core {
     view_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     proj_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-    _cam_pos: threed::vec3,
-    light_dir: threed::vec3,
+    _cam_pos: vec3,
+    light_dir: vec3,
 }
 
 fn init() -> Core {
-    let screen = threed::Screen {
+    let screen = Screen {
         width: 800,
         height: 600,
     };
-    let camera = threed::Camera {
+    let camera = Camera {
         fov: 60.,
         near_plane: 0.1,
         far_plane: 1000.,
     };
 
-    let proj_mat = threed::create_projection_matrix(screen, camera);
+    let proj_mat = create_projection_matrix(screen, camera);
 
-    let cam_pos = threed::vec3 {
+    let cam_pos = vec3 {
         x: 0.,
         y: 5.,
         z: -20.,
     };
 
-    let view_mat = threed::create_view_matrix(0., cam_pos);
+    let view_mat = create_view_matrix(0., cam_pos);
 
-    let light_dir = threed::vec3 {
+    let light_dir = vec3 {
         x: 0.,
         y: 10.,
         z: -10.,
@@ -77,7 +77,12 @@ fn main() {
 
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    let objects = vec![init_cube(), init_teapot()];
+    let objects = vec![
+        init_cube(),
+        init_teapot(-5., 2.),
+        init_teapot(0., 0.),
+        init_teapot(3., 3.),
+    ];
 
     let mut prev = Instant::now();
     let mut count = 0;
@@ -100,13 +105,13 @@ fn main() {
 
         rot_y += delta_time * degrees_per_second;
 
-        let mut tris: Vec<(raster::Tri, threed::vec3, Colour)> = Vec::new();
+        let mut tris: Vec<(raster::Tri, vec3, Colour)> = Vec::new();
 
         for object in &objects {
-            let rot_x_mat = threed::create_x_rotation_matrix(object.transform.rotation.x);
-            let rot_y_mat = threed::create_y_rotation_matrix(object.transform.rotation.y + rot_y);
-            let rot_z_mat = threed::create_z_rotation_matrix(object.transform.rotation.z);
-            let trans_mat = threed::create_translation_matrix(
+            let rot_x_mat = create_x_rotation_matrix(object.transform.rotation.x);
+            let rot_y_mat = create_y_rotation_matrix(object.transform.rotation.y + rot_y);
+            let rot_z_mat = create_z_rotation_matrix(object.transform.rotation.z);
+            let trans_mat = create_translation_matrix(
                 object.transform.position.x,
                 object.transform.position.y,
                 object.transform.position.z,
@@ -143,9 +148,7 @@ fn main() {
         for index in 0..tris.len() {
             let tri = &tris[indices[index]];
 
-            //  let colour = Colour::new(190, 255, 136);
-
-            let colour = threed::calc_tri_illum(&core.light_dir, &tri.1, tri.2);
+            let colour = calc_tri_illum(&core.light_dir, &tri.1, tri.2);
 
             //  if (index == 4) | (index == 5) {
             draw_triangle(&mut buffer, &tri.0, colour.as_0rgb());
@@ -164,7 +167,7 @@ fn main() {
     }
 }
 
-fn init_cube() -> threed::Object {
+fn init_cube() -> Object {
     let path = "c:\\temp\\cube.obj";
     let position = vec3 {
         x: 3.,
@@ -178,17 +181,12 @@ fn init_cube() -> threed::Object {
     };
     let transform = Transform { position, rotation };
     let albedo = Colour::new(42, 170, 255);
-    threed::Object::create_from_file("cube".to_string(), path.to_string(), transform, albedo)
-        .unwrap()
+    Object::create_from_file("cube".to_string(), path.to_string(), transform, albedo).unwrap()
 }
 
-fn init_teapot() -> threed::Object {
+fn init_teapot(x: f32, y: f32) -> Object {
     let path = "c:\\temp\\teapot.obj";
-    let position = vec3 {
-        x: -10.,
-        y: 0.,
-        z: 0.,
-    };
+    let position = vec3 { x, y, z: 0. };
     let rotation = vec3 {
         x: 0.,
         y: 0.,
@@ -196,32 +194,31 @@ fn init_teapot() -> threed::Object {
     };
     let transform = Transform { position, rotation };
     let albedo = Colour::new(190, 255, 136);
-    threed::Object::create_from_file("teapot".to_string(), path.to_string(), transform, albedo)
-        .unwrap()
+    Object::create_from_file("teapot".to_string(), path.to_string(), transform, albedo).unwrap()
 }
 
 fn process_tri(
     core: &Core,
-    tri: &threed::Tri,
+    tri: &Tri,
     rot_z_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     rot_y_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     rot_x_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     trans_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     albedo: Colour,
-) -> Option<(raster::Tri, threed::Vert, Colour)> {
+) -> Option<(raster::Tri, Vert, Colour)> {
     let mut tri = transform_tri(tri, rot_z_mat, rot_y_mat, rot_x_mat, trans_mat);
 
-    let normal = threed::normal(&tri);
+    let normal = normal(&tri);
 
     if normal.z <= 0. {
-        tri.v1 = threed::mult_vec3_mat4(tri.v1, &core.view_mat);
-        tri.v1 = threed::mult_vec3_mat4(tri.v1, &core.proj_mat);
+        tri.v1 = mult_vec3_mat4(tri.v1, &core.view_mat);
+        tri.v1 = mult_vec3_mat4(tri.v1, &core.proj_mat);
 
-        tri.v2 = threed::mult_vec3_mat4(tri.v2, &core.view_mat);
-        tri.v2 = threed::mult_vec3_mat4(tri.v2, &core.proj_mat);
+        tri.v2 = mult_vec3_mat4(tri.v2, &core.view_mat);
+        tri.v2 = mult_vec3_mat4(tri.v2, &core.proj_mat);
 
-        tri.v3 = threed::mult_vec3_mat4(tri.v3, &core.view_mat);
-        tri.v3 = threed::mult_vec3_mat4(tri.v3, &core.proj_mat);
+        tri.v3 = mult_vec3_mat4(tri.v3, &core.view_mat);
+        tri.v3 = mult_vec3_mat4(tri.v3, &core.proj_mat);
 
         tri.v1.x += 1.;
         tri.v1.x *= 0.5 * (WIDTH as f32);
@@ -269,23 +266,23 @@ fn process_tri(
 }
 
 fn transform_tri(
-    tri: &threed::Tri,
+    tri: &Tri,
     rot_z_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     rot_y_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     rot_x_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     trans_mat: &ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-) -> threed::Tri {
-    let mut v1 = threed::mult_vec3_mat4(tri.v1, rot_z_mat);
-    v1 = threed::mult_vec3_mat4(v1, rot_y_mat);
-    v1 = threed::mult_vec3_mat4(v1, rot_x_mat);
-    v1 = threed::mult_vec3_mat4(v1, trans_mat);
-    let mut v2 = threed::mult_vec3_mat4(tri.v2, rot_z_mat);
-    v2 = threed::mult_vec3_mat4(v2, rot_y_mat);
-    v2 = threed::mult_vec3_mat4(v2, rot_x_mat);
-    v2 = threed::mult_vec3_mat4(v2, trans_mat);
-    let mut v3 = threed::mult_vec3_mat4(tri.v3, rot_z_mat);
-    v3 = threed::mult_vec3_mat4(v3, rot_y_mat);
-    v3 = threed::mult_vec3_mat4(v3, rot_x_mat);
-    v3 = threed::mult_vec3_mat4(v3, trans_mat);
-    threed::Tri { v1, v2, v3 }
+) -> Tri {
+    let mut v1 = mult_vec3_mat4(tri.v1, rot_z_mat);
+    v1 = mult_vec3_mat4(v1, rot_y_mat);
+    v1 = mult_vec3_mat4(v1, rot_x_mat);
+    v1 = mult_vec3_mat4(v1, trans_mat);
+    let mut v2 = mult_vec3_mat4(tri.v2, rot_z_mat);
+    v2 = mult_vec3_mat4(v2, rot_y_mat);
+    v2 = mult_vec3_mat4(v2, rot_x_mat);
+    v2 = mult_vec3_mat4(v2, trans_mat);
+    let mut v3 = mult_vec3_mat4(tri.v3, rot_z_mat);
+    v3 = mult_vec3_mat4(v3, rot_y_mat);
+    v3 = mult_vec3_mat4(v3, rot_x_mat);
+    v3 = mult_vec3_mat4(v3, trans_mat);
+    Tri { v1, v2, v3 }
 }
