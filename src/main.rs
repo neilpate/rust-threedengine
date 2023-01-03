@@ -92,9 +92,14 @@ fn main() {
     // Limit to max ~100 fps update rate
     // window.limit_update_rate(Some(std::time::Duration::from_millis(10)));
 
-    let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
+    let NUM_PIXELS = HEIGHT * WIDTH;
+    let mut buffer: Vec<u32> = vec![0; NUM_PIXELS];
 
-    let mut objects = vec![init_cube(), init_teapot(0., 0., -8.)];
+    let mut objects = vec![
+        init_cube(),
+        init_teapot(0., 0., -8.),
+        // init_spaceship(-5., 2., 5.),
+    ];
 
     let floor = init_checkerboard_floor();
 
@@ -108,11 +113,9 @@ fn main() {
     let mut rot_y = 0f32;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        let len = HEIGHT * WIDTH;
-
         let fill_colour = Colour::new(59, 59, 59);
 
-        buffer[0..len].fill(fill_colour.as_0rgb());
+        buffer[0..NUM_PIXELS].fill(fill_colour.as_0rgb());
 
         let now = Instant::now();
         let delta_time = (now - prev).as_secs_f32();
@@ -262,6 +265,20 @@ fn init_cube() -> Object {
 
 fn init_teapot(x: f32, y: f32, z: f32) -> Object {
     let model_path = model_path("teapot.obj".to_string());
+
+    let position = vec3 { x, y, z };
+    let rotation = vec3 {
+        x: 0.,
+        y: 0.,
+        z: 0.,
+    };
+    let transform = Transform { position, rotation };
+    let albedo = Colour::new(1, 204, 3);
+    Object::create_from_file("teapot".to_string(), model_path, transform, albedo).unwrap()
+}
+
+fn init_spaceship(x: f32, y: f32, z: f32) -> Object {
+    let model_path = model_path("spaceship.obj".to_string());
 
     let position = vec3 { x, y, z };
     let rotation = vec3 {
