@@ -1,4 +1,6 @@
 use minifb::{Key, Scale, Window, WindowOptions};
+use std::env;
+use std::path::Path;
 use std::time::Instant;
 use threed::*;
 
@@ -77,12 +79,7 @@ fn main() {
 
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    let objects = vec![
-        init_cube(),
-        init_teapot(-5., 2.),
-        init_teapot(0., 0.),
-        init_teapot(3., 3.),
-    ];
+    let objects = vec![init_cube(), init_teapot(-5., 2.)];
 
     let mut prev = Instant::now();
     let mut count = 0;
@@ -167,8 +164,18 @@ fn main() {
     }
 }
 
+fn model_path(model_name: String) -> String {
+    let curr_dir = env::current_dir().unwrap();
+    let mut path = curr_dir.join("Resource\\Models");
+    path = path.join(model_name);
+    let path_str = path.into_os_string().to_str().unwrap().to_string();
+    println!("Model path: {path_str}");
+    path_str
+}
+
 fn init_cube() -> Object {
-    let path = "c:\\temp\\cube.obj";
+    let model_path = model_path("cube.obj".to_string());
+
     let position = vec3 {
         x: 3.,
         y: 3.,
@@ -181,11 +188,13 @@ fn init_cube() -> Object {
     };
     let transform = Transform { position, rotation };
     let albedo = Colour::new(42, 170, 255);
-    Object::create_from_file("cube".to_string(), path.to_string(), transform, albedo).unwrap()
+    // Object::create_from_file("cube".to_string(), path.to_string(), transform, albedo).unwrap()
+    Object::create_from_file("cube".to_string(), model_path, transform, albedo).unwrap()
 }
 
 fn init_teapot(x: f32, y: f32) -> Object {
-    let path = "c:\\temp\\teapot.obj";
+    let model_path = model_path("teapot.obj".to_string());
+
     let position = vec3 { x, y, z: 0. };
     let rotation = vec3 {
         x: 0.,
@@ -194,7 +203,7 @@ fn init_teapot(x: f32, y: f32) -> Object {
     };
     let transform = Transform { position, rotation };
     let albedo = Colour::new(190, 255, 136);
-    Object::create_from_file("teapot".to_string(), path.to_string(), transform, albedo).unwrap()
+    Object::create_from_file("teapot".to_string(), model_path, transform, albedo).unwrap()
 }
 
 fn process_tri(
