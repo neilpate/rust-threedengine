@@ -1,3 +1,18 @@
+// To Do
+// Orthographic camera
+// Mouse object selection
+// Mouse object rotation
+// Mouse object translation
+// Movable light source
+// Move to EGUI?
+// Objectg colour change in real-time
+// Alpha blending
+// Camera controls
+// Add objects are runtime
+// Object scaling
+// On screen text
+// Textures!
+
 use minifb::{Key, Scale, Window, WindowOptions};
 use std::env;
 use std::path::Path;
