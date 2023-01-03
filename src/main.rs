@@ -79,7 +79,13 @@ fn main() {
 
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    let objects = vec![init_cube(), init_teapot(-5., 2.)];
+    let mut objects = vec![init_cube(), init_teapot(0., 0., -8.)];
+
+    let floor = init_checkerboard_floor();
+
+    for obj in floor {
+        objects.push(obj);
+    }
 
     let mut prev = Instant::now();
     let mut count = 0;
@@ -106,7 +112,7 @@ fn main() {
 
         for object in &objects {
             let rot_x_mat = create_x_rotation_matrix(object.transform.rotation.x);
-            let rot_y_mat = create_y_rotation_matrix(object.transform.rotation.y + rot_y);
+            let rot_y_mat = create_y_rotation_matrix(object.transform.rotation.y);
             let rot_z_mat = create_z_rotation_matrix(object.transform.rotation.z);
             let trans_mat = create_translation_matrix(
                 object.transform.position.x,
@@ -157,7 +163,7 @@ fn main() {
         count += 1;
         if count > 100 {
             count = 0;
-            println!("FPS: {fps}");
+            println!("FPS: {fps:.0}");
             let vis_tris = tris.len();
             println!("Visible tris: {vis_tris}");
         }
@@ -172,6 +178,53 @@ fn model_path(model_name: String) -> String {
     println!("Model path: {path_str}");
     path_str
 }
+
+fn init_checkerboard_floor() -> Vec<Object> {
+    let mut objs = Vec::new();
+
+    let model_path = model_path("Plane 1m.obj".to_string());
+
+    let rotation = vec3 {
+        x: 0.,
+        y: 0.,
+        z: 0.,
+    };
+
+    let num = 20;
+    let num_div2 = (num as f32) / 2.;
+
+    for z in 0..num {
+        let z_f32 = z as f32;
+        for x in 0..num {
+            let x_f32 = x as f32;
+            let position = vec3 {
+                x: x_f32 - num_div2,
+                y: 0.,
+                z: z_f32 - num_div2,
+            };
+
+            let transform = Transform { position, rotation };
+
+            let colour = (x_f32 + z_f32) % 2.;
+
+            let mut albedo = Colour::new(255, 255, 255);
+            if colour == 0. {
+            } else {
+                albedo.r = 0;
+                albedo.g = 0;
+                albedo.b = 0;
+            }
+            let obj =
+                Object::create_from_file("cube".to_string(), model_path.clone(), transform, albedo)
+                    .unwrap();
+            objs.push(obj)
+        }
+    }
+
+    objs
+}
+// let transform = Transform { position, rotation };
+// // Object::create_from_file("cube".to_string(), path.to_string(), transform, albedo).unwrap()
 
 fn init_cube() -> Object {
     let model_path = model_path("cube.obj".to_string());
@@ -192,17 +245,17 @@ fn init_cube() -> Object {
     Object::create_from_file("cube".to_string(), model_path, transform, albedo).unwrap()
 }
 
-fn init_teapot(x: f32, y: f32) -> Object {
+fn init_teapot(x: f32, y: f32, z: f32) -> Object {
     let model_path = model_path("teapot.obj".to_string());
 
-    let position = vec3 { x, y, z: 0. };
+    let position = vec3 { x, y, z };
     let rotation = vec3 {
         x: 0.,
         y: 0.,
         z: 0.,
     };
     let transform = Transform { position, rotation };
-    let albedo = Colour::new(190, 255, 136);
+    let albedo = Colour::new(1, 204, 3);
     Object::create_from_file("teapot".to_string(), model_path, transform, albedo).unwrap()
 }
 
