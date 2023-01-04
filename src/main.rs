@@ -183,7 +183,7 @@ fn handle_mouse(core: &mut Core) {
                 core.prev_mouse_pos = core.window.get_mouse_pos(MouseMode::Clamp);
             }
         },
-        _ => {}
+        _ => core.prev_mouse_pos = None,
     }
 
     let delta_y = core.window.get_scroll_wheel();
