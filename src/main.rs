@@ -1,13 +1,13 @@
 // To Do
-// Orthographic camera
 // Mouse object selection
 // Mouse object rotation
 // Mouse object translation
 // Movable light source
-// Move to EGUI?
+// Orthographic camera
 // Objectg colour change in real-time
-// Alpha blending
 // Camera controls
+// Alpha blending
+// Move to EGUI?
 // Add objects are runtime
 // Object scaling
 // On screen text
@@ -31,12 +31,16 @@ mod colour;
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
+const NUM_PIXELS: usize = HEIGHT * WIDTH;
 
 struct Core {
     view_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     proj_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     _cam_pos: vec3,
     light_dir: vec3,
+    window: Window,
+    pixel_buffer: Vec<u32>,
+    objects: Vec<Object>,
 }
 
 fn init() -> Core {
@@ -66,18 +70,7 @@ fn init() -> Core {
         z: -10.,
     };
 
-    Core {
-        view_mat,
-        proj_mat,
-        _cam_pos: cam_pos,
-        light_dir,
-    }
-}
-
-fn main() {
-    let core = init();
-
-    let mut window = Window::new(
+    let window = Window::new(
         "3D Renderer",
         WIDTH,
         HEIGHT,
@@ -92,8 +85,7 @@ fn main() {
     // Limit to max ~100 fps update rate
     // window.limit_update_rate(Some(std::time::Duration::from_millis(10)));
 
-    let NUM_PIXELS = HEIGHT * WIDTH;
-    let mut buffer: Vec<u32> = vec![0; NUM_PIXELS];
+    let mut pixel_buffer: Vec<u32> = vec![0; NUM_PIXELS];
 
     let mut objects = vec![
         init_cube(),
@@ -106,16 +98,32 @@ fn main() {
     for obj in floor {
         objects.push(obj);
     }
+    Core {
+        view_mat,
+        proj_mat,
+        _cam_pos: cam_pos,
+        light_dir,
+        window,
+        pixel_buffer,
+        objects,
+    }
+}
 
+fn main() {
+    let mut core = init();
+
+    main_loop(core);
+}
+
+fn main_loop(mut core: Core) {
     let mut prev = Instant::now();
     let mut count = 0;
 
     let mut rot_y = 0f32;
-
-    while window.is_open() && !window.is_key_down(Key::Escape) {
+    while core.window.is_open() && !core.window.is_key_down(Key::Escape) {
         let fill_colour = Colour::new(59, 59, 59);
 
-        buffer[0..NUM_PIXELS].fill(fill_colour.as_0rgb());
+        core.pixel_buffer[0..NUM_PIXELS].fill(fill_colour.as_0rgb());
 
         let now = Instant::now();
         let delta_time = (now - prev).as_secs_f32();
@@ -128,7 +136,7 @@ fn main() {
 
         let mut tris: Vec<(raster::Tri, vec3, Colour)> = Vec::new();
 
-        for object in &objects {
+        for object in &core.objects {
             let rot_x_mat = create_x_rotation_matrix(object.transform.rotation.x);
             let rot_y_mat = create_y_rotation_matrix(object.transform.rotation.y);
             let rot_z_mat = create_z_rotation_matrix(object.transform.rotation.z);
@@ -172,11 +180,13 @@ fn main() {
             let colour = calc_tri_illum(&core.light_dir, &tri.1, tri.2);
 
             //  if (index == 4) | (index == 5) {
-            draw_triangle(&mut buffer, &tri.0, colour.as_0rgb());
+            draw_triangle(&mut core.pixel_buffer, &tri.0, colour.as_0rgb());
             //  }
         }
 
-        window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+        core.window
+            .update_with_buffer(&core.pixel_buffer, WIDTH, HEIGHT)
+            .unwrap();
 
         count += 1;
         if count > 100 {
