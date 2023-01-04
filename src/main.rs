@@ -13,9 +13,8 @@
 // On screen text
 // Textures!
 
-use minifb::{Key, Scale, Window, WindowOptions};
+use minifb::{Key, KeyRepeat, Scale, Window, WindowOptions};
 use std::env;
-use std::path::Path;
 use std::time::Instant;
 use threed::*;
 
@@ -41,6 +40,7 @@ struct Core {
     window: Window,
     pixel_buffer: Vec<u32>,
     objects: Vec<Object>,
+    shutdown: bool,
 }
 
 fn init() -> Core {
@@ -106,21 +106,37 @@ fn init() -> Core {
         window,
         pixel_buffer,
         objects,
+        shutdown: false,
     }
 }
 
 fn main() {
     let mut core = init();
-
-    main_loop(core);
+    main_loop(&mut core);
+    shutdown(core);
 }
 
-fn main_loop(mut core: Core) {
+fn shutdown(core: Core) {}
+
+fn handle_keys(core: &mut Core) {
+    let keys = core.window.get_keys_pressed(KeyRepeat::Yes);
+
+    if core.window.is_key_down(Key::Escape) {
+        println!("Escape pressed");
+        core.shutdown = true;
+    }
+}
+
+fn main_loop(core: &mut Core) {
     let mut prev = Instant::now();
     let mut count = 0;
-
     let mut rot_y = 0f32;
-    while core.window.is_open() && !core.window.is_key_down(Key::Escape) {
+
+    loop {
+        handle_keys(core);
+        if core.shutdown {
+            return;
+        }
         let fill_colour = Colour::new(59, 59, 59);
 
         core.pixel_buffer[0..NUM_PIXELS].fill(fill_colour.as_0rgb());
