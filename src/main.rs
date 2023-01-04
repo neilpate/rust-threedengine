@@ -13,7 +13,7 @@
 // On screen text
 // Textures!
 
-use minifb::{Key, KeyRepeat, Scale, Window, WindowOptions};
+use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Scale, Window, WindowOptions};
 use std::env;
 use std::time::Instant;
 use threed::*;
@@ -41,6 +41,14 @@ struct Core {
     pixel_buffer: Vec<u32>,
     objects: Vec<Object>,
     shutdown: bool,
+    mouse_button_held: MouseButtonHeld,
+}
+
+enum MouseButtonHeld {
+    None,
+    Left,
+    Middle,
+    Right,
 }
 
 fn init() -> Core {
@@ -107,6 +115,7 @@ fn init() -> Core {
         pixel_buffer,
         objects,
         shutdown: false,
+        mouse_button_held: MouseButtonHeld::None,
     }
 }
 
@@ -122,9 +131,34 @@ fn handle_keys(core: &mut Core) {
     let keys = core.window.get_keys_pressed(KeyRepeat::Yes);
 
     if core.window.is_key_down(Key::Escape) {
-        println!("Escape pressed");
         core.shutdown = true;
     }
+}
+
+fn handle_mouse(core: &mut Core) {
+    if core.window.get_mouse_down(MouseButton::Right) {
+        core.mouse_button_held = MouseButtonHeld::Right;
+    } else {
+        core.mouse_button_held = MouseButtonHeld::None;
+    }
+
+    match core.mouse_button_held {
+        MouseButtonHeld::Right => {
+            core.objects[0].transform.rotation.y = core.objects[0].transform.rotation.y + 1.
+        }
+        _ => {}
+    }
+
+    // let mouse_pos = core.window.get_mouse_pos(MouseMode::Clamp);
+
+    // let x = 0f32;
+
+    // let new_mouse_pos = match mouse_pos {
+    //     Some(mp) => mp.0,
+    //     None => 0.,
+    // };
+
+    // println!("{mouse_pos:?}");
 }
 
 fn main_loop(core: &mut Core) {
@@ -134,6 +168,7 @@ fn main_loop(core: &mut Core) {
 
     loop {
         handle_keys(core);
+        handle_mouse(core);
         if core.shutdown {
             return;
         }
