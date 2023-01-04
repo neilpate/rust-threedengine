@@ -1,7 +1,7 @@
 // To Do
 // Mouse object selection
 // [done] Mouse object rotation
-// Mouse object translation
+// [done] Mouse object translation
 // Movable light source
 // Orthographic camera
 // Objectg colour change in real-time
@@ -145,13 +145,30 @@ fn handle_keys(core: &mut Core) {
 }
 
 fn handle_mouse(core: &mut Core) {
-    if core.window.get_mouse_down(MouseButton::Right) {
+    if core.window.get_mouse_down(MouseButton::Middle) {
+        core.mouse_button_held = MouseButtonHeld::Middle;
+    } else if core.window.get_mouse_down(MouseButton::Right) {
         core.mouse_button_held = MouseButtonHeld::Right;
     } else {
         core.mouse_button_held = MouseButtonHeld::None;
     }
 
     match core.mouse_button_held {
+        MouseButtonHeld::Middle => match core.prev_mouse_pos {
+            Some(prev_pos) => {
+                let curr = core.window.get_mouse_pos(MouseMode::Clamp).unwrap();
+                let delta_x = prev_pos.0 - curr.0;
+                let delta_y = prev_pos.1 - curr.1;
+
+                core.objects[core.selected_object].transform.position.x -= delta_x / 3.;
+                core.objects[core.selected_object].transform.position.z += delta_y / 3.;
+                core.prev_mouse_pos = core.window.get_mouse_pos(MouseMode::Clamp);
+            }
+            None => {
+                core.prev_mouse_pos = core.window.get_mouse_pos(MouseMode::Clamp);
+            }
+        },
+
         MouseButtonHeld::Right => match core.prev_mouse_pos {
             Some(prev_pos) => {
                 let curr = core.window.get_mouse_pos(MouseMode::Clamp).unwrap();
@@ -168,6 +185,13 @@ fn handle_mouse(core: &mut Core) {
         },
         _ => {}
     }
+
+    let delta_y = core.window.get_scroll_wheel();
+
+    match delta_y {
+        Some(val) => core.objects[core.selected_object].transform.position.y += val.1 / 20.,
+        None => {}
+    };
 }
 
 fn main_loop(core: &mut Core) {
