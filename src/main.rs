@@ -1,6 +1,6 @@
 // To Do
 // Mouse object selection
-// Mouse object rotation
+// [done] Mouse object rotation
 // Mouse object translation
 // Movable light source
 // Orthographic camera
@@ -42,6 +42,13 @@ struct Core {
     objects: Vec<Object>,
     shutdown: bool,
     mouse_button_held: MouseButtonHeld,
+    selected_object: usize,
+    prev_mouse_pos: Option<(f32, f32)>,
+}
+
+struct MousePos {
+    x: f32,
+    y: f32,
 }
 
 enum MouseButtonHeld {
@@ -116,6 +123,8 @@ fn init() -> Core {
         objects,
         shutdown: false,
         mouse_button_held: MouseButtonHeld::None,
+        selected_object: 1,
+        prev_mouse_pos: None,
     }
 }
 
@@ -143,22 +152,22 @@ fn handle_mouse(core: &mut Core) {
     }
 
     match core.mouse_button_held {
-        MouseButtonHeld::Right => {
-            core.objects[0].transform.rotation.y = core.objects[0].transform.rotation.y + 1.
-        }
+        MouseButtonHeld::Right => match core.prev_mouse_pos {
+            Some(prev_pos) => {
+                let curr = core.window.get_mouse_pos(MouseMode::Clamp).unwrap();
+                let delta_x = prev_pos.0 - curr.0;
+                let delta_y = prev_pos.1 - curr.1;
+
+                core.objects[core.selected_object].transform.rotation.y -= delta_x;
+                core.objects[core.selected_object].transform.rotation.z += delta_y;
+                core.prev_mouse_pos = core.window.get_mouse_pos(MouseMode::Clamp);
+            }
+            None => {
+                core.prev_mouse_pos = core.window.get_mouse_pos(MouseMode::Clamp);
+            }
+        },
         _ => {}
     }
-
-    // let mouse_pos = core.window.get_mouse_pos(MouseMode::Clamp);
-
-    // let x = 0f32;
-
-    // let new_mouse_pos = match mouse_pos {
-    //     Some(mp) => mp.0,
-    //     None => 0.,
-    // };
-
-    // println!("{mouse_pos:?}");
 }
 
 fn main_loop(core: &mut Core) {
