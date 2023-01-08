@@ -277,54 +277,7 @@ fn main_loop(core: &mut Core) {
 
         let vis_tris = tris.len();
 
-        let stats_x_pos = 520;
-        let mut msg = format!("Frame Rate       {fps:.0} FPS");
-        draw_string(msg, stats_x_pos, 0, font_weight, raster_height, core);
-
-        let mut msg = format!("Trans. & Proj           ");
-        draw_string(
-            msg,
-            stats_x_pos,
-            raster_height as u32,
-            font_weight,
-            raster_height,
-            core,
-        );
-
-        let mut msg = format!("Raster                  ");
-        draw_string(
-            msg,
-            stats_x_pos,
-            2 * raster_height as u32,
-            font_weight,
-            raster_height,
-            core,
-        );
-
-        let mut msg = format!("Present                 ");
-        draw_string(
-            msg,
-            stats_x_pos,
-            3 * raster_height as u32,
-            font_weight,
-            raster_height,
-            core,
-        );
-
-        let mut msg = format!("Visible tris.   {vis_tris}    ");
-        draw_string(
-            msg,
-            stats_x_pos,
-            4 * raster_height as u32,
-            font_weight,
-            raster_height,
-            core,
-        );
-
-        //   "Frame Rate      {fps:.0}         Trans. & Proj        Raster        Present        "
-        //  );
-
-        // rasterize each char and draw it into the framebuffer
+        draw_stats(fps, vis_tris, font_weight, raster_height, core);
 
         core.window
             .update_with_buffer(&core.pixel_buffer, WIDTH, HEIGHT)
@@ -338,6 +291,54 @@ fn main_loop(core: &mut Core) {
             println!("Visible tris: {vis_tris}");
         }
     }
+}
+
+fn draw_stats(
+    fps: f32,
+    vis_tris: usize,
+    font_weight: FontWeight,
+    raster_height: RasterHeight,
+    core: &mut Core,
+) {
+    let stats_x_pos = 520;
+    let mut msg = format!("Frame Rate       {fps:.0} FPS");
+    draw_string(msg, stats_x_pos, 0, font_weight, raster_height, core);
+    let mut msg = format!("Trans. & Proj           ");
+    draw_string(
+        msg,
+        stats_x_pos,
+        raster_height as u32,
+        font_weight,
+        raster_height,
+        core,
+    );
+    let mut msg = format!("Raster                  ");
+    draw_string(
+        msg,
+        stats_x_pos,
+        2 * raster_height as u32,
+        font_weight,
+        raster_height,
+        core,
+    );
+    let mut msg = format!("Present                 ");
+    draw_string(
+        msg,
+        stats_x_pos,
+        3 * raster_height as u32,
+        font_weight,
+        raster_height,
+        core,
+    );
+    let mut msg = format!("Visible tris.   {vis_tris}    ");
+    draw_string(
+        msg,
+        stats_x_pos,
+        4 * raster_height as u32,
+        font_weight,
+        raster_height,
+        core,
+    );
 }
 
 fn draw_string(
