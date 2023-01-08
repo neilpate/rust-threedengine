@@ -14,6 +14,7 @@
 // Textures!
 
 use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Scale, Window, WindowOptions};
+use noto_sans_mono_bitmap::{get_raster, get_raster_width, FontWeight, RasterHeight};
 use std::env;
 use std::time::Instant;
 use threed::*;
@@ -199,6 +200,12 @@ fn main_loop(core: &mut Core) {
     let mut count = 0;
     let mut rot_y = 0f32;
 
+    let font_weight = FontWeight::Regular;
+    let raster_height = RasterHeight::Size16;
+    // let buffer_height = raster_height.val();
+    let char_width = get_raster_width(font_weight, raster_height);
+    //let buffer_width = char_width * msg.chars().count();
+
     loop {
         handle_keys(core);
         handle_mouse(core);
@@ -268,6 +275,57 @@ fn main_loop(core: &mut Core) {
             //  }
         }
 
+        let vis_tris = tris.len();
+
+        let stats_x_pos = 520;
+        let mut msg = format!("Frame Rate       {fps:.0} FPS");
+        draw_string(msg, stats_x_pos, 0, font_weight, raster_height, core);
+
+        let mut msg = format!("Trans. & Proj           ");
+        draw_string(
+            msg,
+            stats_x_pos,
+            raster_height as u32,
+            font_weight,
+            raster_height,
+            core,
+        );
+
+        let mut msg = format!("Raster                  ");
+        draw_string(
+            msg,
+            stats_x_pos,
+            2 * raster_height as u32,
+            font_weight,
+            raster_height,
+            core,
+        );
+
+        let mut msg = format!("Present                 ");
+        draw_string(
+            msg,
+            stats_x_pos,
+            3 * raster_height as u32,
+            font_weight,
+            raster_height,
+            core,
+        );
+
+        let mut msg = format!("Visible tris.   {vis_tris}    ");
+        draw_string(
+            msg,
+            stats_x_pos,
+            4 * raster_height as u32,
+            font_weight,
+            raster_height,
+            core,
+        );
+
+        //   "Frame Rate      {fps:.0}         Trans. & Proj        Raster        Present        "
+        //  );
+
+        // rasterize each char and draw it into the framebuffer
+
         core.window
             .update_with_buffer(&core.pixel_buffer, WIDTH, HEIGHT)
             .unwrap();
@@ -278,6 +336,34 @@ fn main_loop(core: &mut Core) {
             println!("FPS: {fps:.0}");
             let vis_tris = tris.len();
             println!("Visible tris: {vis_tris}");
+        }
+    }
+}
+
+fn draw_string(
+    msg: String,
+    x: u32,
+    y: u32,
+    font_weight: FontWeight,
+    raster_height: RasterHeight,
+    core: &mut Core,
+) {
+    for (char_i, char) in msg.chars().enumerate() {
+        let char_raster = get_raster(char, font_weight, raster_height).expect("unknown char");
+        for (row_i, row) in char_raster.raster().iter().enumerate() {
+            for (col_i, intensity) in row.iter().enumerate() {
+                let (r, g, b) = (*intensity as u32, *intensity as u32, *intensity as u32);
+                let (r, g, b) = (255 - r, 255 - g, 255 - b);
+                let rgb_32 = /*0 << 24 | */r << 16 | g << 8 | b;
+
+                let index = char_i * char_raster.width()
+                    + col_i
+                    + row_i * WIDTH
+                    + (x as usize)
+                    + (y as usize * WIDTH);
+
+                core.pixel_buffer[index] = rgb_32;
+            }
         }
     }
 }
