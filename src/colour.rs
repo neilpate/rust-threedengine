@@ -30,4 +30,10 @@ impl Colour {
 
         Colour { r, g, b, a: 0 }
     }
+
+    pub fn add_intensity(&mut self, intensity: u8) {
+        self.r = self.r.saturating_add(intensity);
+        self.g = self.g.saturating_add(intensity);
+        self.b = self.b.saturating_add(intensity);
+    }
 }

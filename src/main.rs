@@ -303,7 +303,7 @@ fn draw_stats(
     let stats_x_pos = 520;
     let mut msg = format!("Frame Rate       {fps:.0} FPS");
     draw_string(msg, stats_x_pos, 0, font_weight, raster_height, core);
-    let mut msg = format!("Trans. & Proj           ");
+    let mut msg = format!("Trans. & Proj");
     draw_string(
         msg,
         stats_x_pos,
@@ -312,7 +312,7 @@ fn draw_stats(
         raster_height,
         core,
     );
-    let mut msg = format!("Raster                  ");
+    let mut msg = format!("Raster");
     draw_string(
         msg,
         stats_x_pos,
@@ -321,7 +321,7 @@ fn draw_stats(
         raster_height,
         core,
     );
-    let mut msg = format!("Present                 ");
+    let mut msg = format!("Present");
     draw_string(
         msg,
         stats_x_pos,
@@ -330,7 +330,7 @@ fn draw_stats(
         raster_height,
         core,
     );
-    let mut msg = format!("Visible tris.   {vis_tris}    ");
+    let mut msg = format!("Visible tris.   {vis_tris}");
     draw_string(
         msg,
         stats_x_pos,
@@ -353,17 +353,17 @@ fn draw_string(
         let char_raster = get_raster(char, font_weight, raster_height).expect("unknown char");
         for (row_i, row) in char_raster.raster().iter().enumerate() {
             for (col_i, intensity) in row.iter().enumerate() {
-                let (r, g, b) = (*intensity as u32, *intensity as u32, *intensity as u32);
-                let (r, g, b) = (255 - r, 255 - g, 255 - b);
-                let rgb_32 = /*0 << 24 | */r << 16 | g << 8 | b;
-
                 let index = char_i * char_raster.width()
                     + col_i
                     + row_i * WIDTH
                     + (x as usize)
                     + (y as usize * WIDTH);
 
-                core.pixel_buffer[index] = rgb_32;
+                let mut curr_pixel = Colour::from_u32(core.pixel_buffer[index]);
+
+                curr_pixel.add_intensity(*intensity);
+
+                core.pixel_buffer[index] = curr_pixel.as_0rgb();
             }
         }
     }
