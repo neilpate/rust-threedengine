@@ -101,7 +101,7 @@ fn init() -> Core {
     // Limit to max ~100 fps update rate
     // window.limit_update_rate(Some(std::time::Duration::from_millis(10)));
 
-    let mut pixel_buffer: Vec<u32> = vec![0; NUM_PIXELS];
+    let pixel_buffer: Vec<u32> = vec![0; NUM_PIXELS];
 
     let mut objects = vec![
         init_cube(),
