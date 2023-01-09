@@ -41,7 +41,7 @@ struct Core {
     window: Window,
     pixel_buffer: Vec<u32>,
     objects: Vec<Object>,
-    shutdown: bool,
+    should_shutdown: bool,
     mouse_button_held: MouseButtonHeld,
     selected_object: usize,
     prev_mouse_pos: Option<(f32, f32)>,
@@ -122,7 +122,7 @@ fn init() -> Core {
         window,
         pixel_buffer,
         objects,
-        shutdown: false,
+        should_shutdown: false,
         mouse_button_held: MouseButtonHeld::None,
         selected_object: 1,
         prev_mouse_pos: None,
@@ -132,16 +132,16 @@ fn init() -> Core {
 fn main() {
     let mut core = init();
     main_loop(&mut core);
-    shutdown(core);
+    if core.should_shutdown {
+        return;
+    }
 }
-
-fn shutdown(core: Core) {}
 
 fn handle_keys(core: &mut Core) {
     let keys = core.window.get_keys_pressed(KeyRepeat::Yes);
 
     if core.window.is_key_down(Key::Escape) {
-        core.shutdown = true;
+        core.should_shutdown = true;
     }
 }
 
@@ -209,7 +209,7 @@ fn main_loop(core: &mut Core) {
     loop {
         handle_keys(core);
         handle_mouse(core);
-        if core.shutdown {
+        if core.should_shutdown {
             return;
         }
         let fill_colour = Colour::new(59, 59, 59);
