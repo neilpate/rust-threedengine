@@ -24,7 +24,7 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(name: String, tris: Vec<Tri>, transform: Transform, albedo: Colour) -> Self {
+    pub fn _new(name: String, tris: Vec<Tri>, transform: Transform, albedo: Colour) -> Self {
         Self {
             name,
             tris,

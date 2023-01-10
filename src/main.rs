@@ -10,12 +10,12 @@
 // Move to EGUI?
 // Add objects are runtime
 // Object scaling
-// On screen text
+// [done] On screen text
 // Textures!
 
 use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Scale, Window, WindowOptions};
-use noto_sans_mono_bitmap::{get_raster, get_raster_width, FontWeight, RasterHeight};
-use raster::{draw_line, draw_outlined_triangle};
+use noto_sans_mono_bitmap::{get_raster, FontWeight, RasterHeight};
+use raster::draw_outlined_triangle;
 use std::env;
 use std::time::Instant;
 use threed::*;
@@ -58,14 +58,14 @@ struct Core {
     stats: Stats,
 }
 
-struct MousePos {
+struct _MousePos {
     x: f32,
     y: f32,
 }
 
 enum MouseButtonHeld {
     None,
-    Left,
+    _Left,
     Middle,
     Right,
 }
@@ -160,8 +160,6 @@ fn main() {
 }
 
 fn handle_keys(core: &mut Core) {
-    let keys = core.window.get_keys_pressed(KeyRepeat::Yes);
-
     if core.window.is_key_down(Key::Escape) {
         core.should_shutdown = true;
     }
@@ -223,7 +221,7 @@ fn handle_mouse(core: &mut Core) {
 
 fn main_loop(core: &mut Core) {
     let mut prev = Instant::now();
-    let mut rot_y = 0f32;
+    let mut _rot_y = 0f32;
 
     let font_weight = FontWeight::Regular;
     let raster_height = RasterHeight::Size20;
@@ -243,9 +241,8 @@ fn main_loop(core: &mut Core) {
         prev = now;
         core.stats.frame_rate = 1. / delta_time;
 
-        let degrees_per_second = 36.;
-
-        rot_y += delta_time * degrees_per_second;
+        // let degrees_per_second = 36.;
+        //rot_y += delta_time * degrees_per_second;
 
         let mut tris: Vec<(raster::Tri, vec3, Colour)> = Vec::new();
 
@@ -334,11 +331,11 @@ fn main_loop(core: &mut Core) {
 fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHeight) {
     let stats_x_pos = 520;
     let frame_rate = core.stats.frame_rate;
-    let mut msg = format!("Frame Rate       {frame_rate:.0} FPS");
+    let msg = format!("Frame Rate       {frame_rate:.0} FPS");
     draw_string(msg, stats_x_pos, 0, font_weight, raster_height, core);
 
     let trans_and_proj_time_ms = core.stats.trans_and_proj_time * 1000.;
-    let mut msg = format!("Trans. & Proj      {trans_and_proj_time_ms:.0} ms");
+    let msg = format!("Trans. & Proj      {trans_and_proj_time_ms:.0} ms");
     draw_string(
         msg,
         stats_x_pos,
@@ -349,7 +346,7 @@ fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHei
     );
 
     let raster_time_ms = core.stats.raster_time * 1000.;
-    let mut msg = format!("Raster             {raster_time_ms:.0} ms");
+    let msg = format!("Raster             {raster_time_ms:.0} ms");
     draw_string(
         msg,
         stats_x_pos,
@@ -360,7 +357,7 @@ fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHei
     );
 
     let present_time_ms = core.stats.present_time * 1000.;
-    let mut msg = format!("Present            {present_time_ms:.0} us");
+    let msg = format!("Present            {present_time_ms:.0} us");
     draw_string(
         msg,
         stats_x_pos,
@@ -371,7 +368,7 @@ fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHei
     );
 
     let vis_tris = core.stats.vis_tris;
-    let mut msg = format!("Visible tris.   {vis_tris}");
+    let msg = format!("Visible tris.   {vis_tris}");
     draw_string(
         msg,
         stats_x_pos,
@@ -499,7 +496,7 @@ fn init_teapot(x: f32, y: f32, z: f32) -> Object {
     Object::create_from_file("teapot".to_string(), model_path, transform, albedo).unwrap()
 }
 
-fn init_spaceship(x: f32, y: f32, z: f32) -> Object {
+fn _init_spaceship(x: f32, y: f32, z: f32) -> Object {
     let model_path = model_path("spaceship.obj".to_string());
 
     let position = vec3 { x, y, z };
