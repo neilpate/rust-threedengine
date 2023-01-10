@@ -21,6 +21,7 @@ fn two_d_to_1d(x: i32, y: i32) -> usize {
     (HEIGHT - (y as usize) - 1) * WIDTH + (x as usize)
 }
 
+/// This is an implementation of Bresenahms fast line drawing routine
 pub fn draw_line(buffer: &mut Vec<u32>, x1: u32, y1: u32, x2: u32, y2: u32, colour: u32) {
     let mut x1 = x1 as i32;
     let mut y1 = y1 as i32;
@@ -133,6 +134,12 @@ fn sort_points_by_y(p1: Point, p2: Point, p3: Point) -> (Point, Point, Point) {
     (pmax, pmid, pmin)
 }
 
+pub fn draw_outlined_triangle(buffer: &mut Vec<u32>, tri: &Tri, colour: u32) {
+    draw_line(buffer, tri.p1.x, tri.p1.y, tri.p2.x, tri.p2.y, colour);
+    draw_line(buffer, tri.p2.x, tri.p2.y, tri.p3.x, tri.p3.y, colour);
+    draw_line(buffer, tri.p3.x, tri.p3.y, tri.p1.x, tri.p1.y, colour);
+}
+
 /// Any triangle (p1, p2, p3) can be split into two further triangles, one with a flat bottom
 /// and one with a flat top
 /// Flat bottom: (p1, p2, p4)
@@ -151,7 +158,7 @@ fn sort_points_by_y(p1: Point, p2: Point, p3: Point) -> (Point, Point, Point) {
 /// /// (0,0)---------------------> +x
 ///
 ///
-pub fn draw_triangle(buffer: &mut Vec<u32>, tri: &Tri, colour: u32) {
+pub fn draw_filled_triangle(buffer: &mut Vec<u32>, tri: &Tri, colour: u32) {
     // println!("Drawing triangle: {tri:?}");
 
     // Goal is to calculate p4

@@ -15,12 +15,12 @@
 
 use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Scale, Window, WindowOptions};
 use noto_sans_mono_bitmap::{get_raster, get_raster_width, FontWeight, RasterHeight};
-use raster::draw_line;
+use raster::{draw_line, draw_outlined_triangle};
 use std::env;
 use std::time::Instant;
 use threed::*;
 
-use crate::raster::{draw_triangle, Point};
+use crate::raster::{draw_filled_triangle, Point};
 
 use crate::colour::*;
 
@@ -267,15 +267,11 @@ fn main_loop(core: &mut Core) {
 
             let colour = calc_tri_illum(&core.light_dir, &tri.1, tri.2);
 
-            draw_triangle(&mut core.pixel_buffer, &tri.0, colour.as_0rgb());
+            // draw_filled_triangle(&mut core.pixel_buffer, &tri.0, colour.as_0rgb());
+            draw_outlined_triangle(&mut core.pixel_buffer, &tri.0, colour.as_0rgb());
         }
 
-        let colour = Colour::new(255, 255, 255);
-        draw_line(&mut core.pixel_buffer, 0, 599, 799, 0, colour.as_0rgb());
-
-        let vis_tris = tris.len();
-
-        draw_stats(fps, vis_tris, font_weight, raster_height, core);
+        draw_stats(fps, tris.len(), font_weight, raster_height, core);
 
         core.window
             .update_with_buffer(&core.pixel_buffer, WIDTH, HEIGHT)
