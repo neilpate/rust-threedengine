@@ -17,6 +17,58 @@ pub struct Point {
     pub z: f32,
 }
 
+fn two_d_to_1d(x: i32, y: i32) -> usize {
+    (HEIGHT - (y as usize) - 1) * WIDTH + (x as usize)
+}
+
+pub fn draw_line(buffer: &mut Vec<u32>, x1: u32, y1: u32, x2: u32, y2: u32, colour: u32) {
+    let mut x1 = x1 as i32;
+    let mut y1 = y1 as i32;
+    let x2 = x2 as i32;
+    let y2 = y2 as i32;
+
+    let sign_x: i32;
+    let sign_y: i32;
+
+    if x2 > x1 {
+        sign_x = 1;
+    } else {
+        sign_x = -1;
+    }
+
+    if y2 > y1 {
+        sign_y = 1;
+    } else {
+        sign_y = -1;
+    }
+
+    let dx = (x2 - x1).abs();
+    let dy = -(y2 - y1).abs();
+
+    let mut err = (dx + dy) as i32;
+    let mut e2: i32;
+
+    loop {
+        let index = two_d_to_1d(x1, y1);
+        buffer[index] = colour;
+
+        if x1 == x2 && y1 == y2 {
+            return;
+        } else {
+            e2 = 2 * err;
+            if e2 >= dy {
+                err += dy;
+                x1 += sign_x;
+            }
+
+            if e2 <= dy {
+                err += dx;
+                y1 += sign_y;
+            }
+        }
+    }
+}
+
 pub fn draw_horiz_line(buffer: &mut Vec<u32>, x1: u32, x2: u32, y: u32, colour: u32) {
     if check_bounds(x1, x2, y) {
         let y = y as usize;
@@ -258,6 +310,15 @@ fn check_bounds(from: u32, to: u32, y: u32) -> bool {
     } else {
         false
     }
+}
+
+#[test]
+fn test_2d_to_1d_1() {
+    let expected = HEIGHT * WIDTH - WIDTH;
+
+    let result = two_d_to_1d(0, 0);
+
+    assert_eq!(expected, result);
 }
 
 #[test]

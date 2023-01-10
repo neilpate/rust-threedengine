@@ -14,7 +14,7 @@ approx = "0.5.1"
 ndarray = { version = "0.15.6", features = ["approx"] }
 minifb = "0.23.0"
 rand = "0.8.4"
-noto-sans-mono-bitmap = "0.2.0"
+noto-sans-mono-bitmap = { version = "0.2.0", features = ["size_20"] }
 
 [dependencies.float_eq]
 version = "1"

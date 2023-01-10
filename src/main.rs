@@ -15,6 +15,7 @@
 
 use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Scale, Window, WindowOptions};
 use noto_sans_mono_bitmap::{get_raster, get_raster_width, FontWeight, RasterHeight};
+use raster::draw_line;
 use std::env;
 use std::time::Instant;
 use threed::*;
@@ -197,14 +198,11 @@ fn handle_mouse(core: &mut Core) {
 
 fn main_loop(core: &mut Core) {
     let mut prev = Instant::now();
-    let mut count = 0;
     let mut rot_y = 0f32;
 
     let font_weight = FontWeight::Regular;
-    let raster_height = RasterHeight::Size16;
-    // let buffer_height = raster_height.val();
-    let char_width = get_raster_width(font_weight, raster_height);
-    //let buffer_width = char_width * msg.chars().count();
+    let raster_height = RasterHeight::Size20;
+    let fill_colour = Colour::new(59, 59, 59);
 
     loop {
         handle_keys(core);
@@ -212,7 +210,6 @@ fn main_loop(core: &mut Core) {
         if core.should_shutdown {
             return;
         }
-        let fill_colour = Colour::new(59, 59, 59);
 
         core.pixel_buffer[0..NUM_PIXELS].fill(fill_colour.as_0rgb());
 
@@ -270,10 +267,11 @@ fn main_loop(core: &mut Core) {
 
             let colour = calc_tri_illum(&core.light_dir, &tri.1, tri.2);
 
-            //  if (index == 4) | (index == 5) {
             draw_triangle(&mut core.pixel_buffer, &tri.0, colour.as_0rgb());
-            //  }
         }
+
+        let colour = Colour::new(255, 255, 255);
+        draw_line(&mut core.pixel_buffer, 0, 599, 799, 0, colour.as_0rgb());
 
         let vis_tris = tris.len();
 
@@ -282,14 +280,6 @@ fn main_loop(core: &mut Core) {
         core.window
             .update_with_buffer(&core.pixel_buffer, WIDTH, HEIGHT)
             .unwrap();
-
-        count += 1;
-        if count > 100 {
-            count = 0;
-            println!("FPS: {fps:.0}");
-            let vis_tris = tris.len();
-            println!("Visible tris: {vis_tris}");
-        }
     }
 }
 
