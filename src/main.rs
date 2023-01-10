@@ -34,6 +34,14 @@ const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
 const NUM_PIXELS: usize = HEIGHT * WIDTH;
 
+struct Stats {
+    frame_rate: f32,
+    trans_and_proj_time: f32,
+    raster_time: f32,
+    present_time: f32,
+    vis_tris: usize,
+}
+
 struct Core {
     view_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     proj_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
@@ -46,6 +54,8 @@ struct Core {
     mouse_button_held: MouseButtonHeld,
     selected_object: usize,
     prev_mouse_pos: Option<(f32, f32)>,
+    wireframe_enabled: bool,
+    stats: Stats,
 }
 
 struct MousePos {
@@ -115,6 +125,15 @@ fn init() -> Core {
     for obj in floor {
         objects.push(obj);
     }
+
+    let stats = Stats {
+        frame_rate: 0.,
+        trans_and_proj_time: 0.,
+        raster_time: 0.,
+        present_time: 0.,
+        vis_tris: 0,
+    };
+
     Core {
         view_mat,
         proj_mat,
@@ -127,6 +146,8 @@ fn init() -> Core {
         mouse_button_held: MouseButtonHeld::None,
         selected_object: 1,
         prev_mouse_pos: None,
+        wireframe_enabled: false,
+        stats,
     }
 }
 
@@ -143,6 +164,10 @@ fn handle_keys(core: &mut Core) {
 
     if core.window.is_key_down(Key::Escape) {
         core.should_shutdown = true;
+    }
+
+    if core.window.is_key_pressed(Key::L, KeyRepeat::No) {
+        core.wireframe_enabled = !core.wireframe_enabled;
     }
 }
 
@@ -216,13 +241,16 @@ fn main_loop(core: &mut Core) {
         let now = Instant::now();
         let delta_time = (now - prev).as_secs_f32();
         prev = now;
-        let fps = 1. / delta_time;
+        core.stats.frame_rate = 1. / delta_time;
 
         let degrees_per_second = 36.;
 
         rot_y += delta_time * degrees_per_second;
 
         let mut tris: Vec<(raster::Tri, vec3, Colour)> = Vec::new();
+
+        //Start of Transform and project
+        let trans_and_proj_time_start = Instant::now();
 
         for object in &core.objects {
             let rot_x_mat = create_x_rotation_matrix(object.transform.rotation.x);
@@ -262,34 +290,55 @@ fn main_loop(core: &mut Core) {
         indices.sort_by_key(|&i| z_vals[i]);
         indices.reverse();
 
+        let trans_and_proj_time_end = Instant::now();
+
+        core.stats.trans_and_proj_time =
+            (trans_and_proj_time_end - trans_and_proj_time_start).as_secs_f32();
+        //End of Transform and Project
+
+        //Start of Raster
+        let raster_time_start = Instant::now();
+
         for index in 0..tris.len() {
             let tri = &tris[indices[index]];
 
             let colour = calc_tri_illum(&core.light_dir, &tri.1, tri.2);
-
-            // draw_filled_triangle(&mut core.pixel_buffer, &tri.0, colour.as_0rgb());
-            draw_outlined_triangle(&mut core.pixel_buffer, &tri.0, colour.as_0rgb());
+            if core.wireframe_enabled {
+                draw_outlined_triangle(&mut core.pixel_buffer, &tri.0, colour.as_0rgb());
+            } else {
+                draw_filled_triangle(&mut core.pixel_buffer, &tri.0, colour.as_0rgb());
+            }
         }
 
-        draw_stats(fps, tris.len(), font_weight, raster_height, core);
+        let raster_time_end = Instant::now();
+
+        core.stats.raster_time = (raster_time_end - raster_time_start).as_secs_f32();
+        //End of Raster
+
+        core.stats.vis_tris = tris.len();
+        draw_stats(core, font_weight, raster_height);
+
+        //Start of Present
+        let present_time_start = Instant::now();
 
         core.window
             .update_with_buffer(&core.pixel_buffer, WIDTH, HEIGHT)
             .unwrap();
+
+        let present_time_end = Instant::now();
+        core.stats.present_time = (present_time_end - present_time_start).as_secs_f32();
+        //End of Present
     }
 }
 
-fn draw_stats(
-    fps: f32,
-    vis_tris: usize,
-    font_weight: FontWeight,
-    raster_height: RasterHeight,
-    core: &mut Core,
-) {
+fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHeight) {
     let stats_x_pos = 520;
-    let mut msg = format!("Frame Rate       {fps:.0} FPS");
+    let frame_rate = core.stats.frame_rate;
+    let mut msg = format!("Frame Rate       {frame_rate:.0} FPS");
     draw_string(msg, stats_x_pos, 0, font_weight, raster_height, core);
-    let mut msg = format!("Trans. & Proj");
+
+    let trans_and_proj_time_ms = core.stats.trans_and_proj_time * 1000.;
+    let mut msg = format!("Trans. & Proj      {trans_and_proj_time_ms:.0} ms");
     draw_string(
         msg,
         stats_x_pos,
@@ -298,7 +347,9 @@ fn draw_stats(
         raster_height,
         core,
     );
-    let mut msg = format!("Raster");
+
+    let raster_time_ms = core.stats.raster_time * 1000.;
+    let mut msg = format!("Raster             {raster_time_ms:.0} ms");
     draw_string(
         msg,
         stats_x_pos,
@@ -307,7 +358,9 @@ fn draw_stats(
         raster_height,
         core,
     );
-    let mut msg = format!("Present");
+
+    let present_time_ms = core.stats.present_time * 1000.;
+    let mut msg = format!("Present            {present_time_ms:.0} us");
     draw_string(
         msg,
         stats_x_pos,
@@ -316,6 +369,8 @@ fn draw_stats(
         raster_height,
         core,
     );
+
+    let vis_tris = core.stats.vis_tris;
     let mut msg = format!("Visible tris.   {vis_tris}");
     draw_string(
         msg,
