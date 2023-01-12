@@ -2,16 +2,16 @@
 // [done] Move tests to separate files
 // [done] Mouse object rotation
 // [done] Mouse object translation
+// [done] On screen text
+// [done] Camera controls
 // Mouse object selection
 // Movable light source
 // Orthographic camera
 // Objectg colour change in real-time
-// Camera controls
 // Alpha blending
 // Move to EGUI?
 // Add objects are runtime
 // Object scaling
-// [done] On screen text
 // Textures!
 
 use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Scale, Window, WindowOptions};
@@ -46,7 +46,9 @@ struct Stats {
 struct Core {
     view_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     proj_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-    _cam_pos: vec3,
+    cam_pos: vec3,
+    _cam_pitch: f32,
+    cam_yaw: f32,
     light_dir: vec3,
     window: Window,
     pixel_buffer: Vec<u32>,
@@ -56,6 +58,8 @@ struct Core {
     selected_object: usize,
     prev_mouse_pos: Option<(f32, f32)>,
     wireframe_enabled: bool,
+    help_enabled: bool,
+    stats_enabled: bool,
     stats: Stats,
 }
 
@@ -138,7 +142,9 @@ fn init() -> Core {
     Core {
         view_mat,
         proj_mat,
-        _cam_pos: cam_pos,
+        cam_pos,
+        _cam_pitch: 0.,
+        cam_yaw: 0.,
         light_dir,
         window,
         pixel_buffer,
@@ -148,6 +154,8 @@ fn init() -> Core {
         selected_object: 1,
         prev_mouse_pos: None,
         wireframe_enabled: false,
+        help_enabled: false,
+        stats_enabled: true,
         stats,
     }
 }
@@ -167,6 +175,44 @@ fn handle_keys(core: &mut Core) {
 
     if core.window.is_key_pressed(Key::L, KeyRepeat::No) {
         core.wireframe_enabled = !core.wireframe_enabled;
+    }
+
+    if core.window.is_key_pressed(Key::H, KeyRepeat::No) {
+        core.help_enabled = !core.help_enabled;
+    }
+
+    if core.window.is_key_pressed(Key::P, KeyRepeat::No) {
+        core.stats_enabled = !core.stats_enabled;
+    }
+
+    if core.window.is_key_pressed(Key::W, KeyRepeat::Yes) {
+        core.cam_pos.z = core.cam_pos.z + 1.;
+        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+    }
+
+    if core.window.is_key_pressed(Key::S, KeyRepeat::Yes) {
+        core.cam_pos.z = core.cam_pos.z - 1.;
+        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+    }
+
+    if core.window.is_key_pressed(Key::A, KeyRepeat::Yes) {
+        core.cam_pos.x = core.cam_pos.x - 1.;
+        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+    }
+
+    if core.window.is_key_pressed(Key::D, KeyRepeat::Yes) {
+        core.cam_pos.x = core.cam_pos.x + 1.;
+        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+    }
+
+    if core.window.is_key_pressed(Key::Left, KeyRepeat::Yes) {
+        core.cam_yaw = core.cam_yaw + 5.;
+        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+    }
+
+    if core.window.is_key_pressed(Key::Right, KeyRepeat::Yes) {
+        core.cam_yaw = core.cam_yaw - 5.;
+        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
     }
 }
 
@@ -314,7 +360,11 @@ fn main_loop(core: &mut Core) {
         //End of Raster
 
         core.stats.vis_tris = tris.len();
-        draw_stats(core, font_weight, raster_height);
+
+        if core.stats_enabled {
+            draw_stats(core, font_weight, raster_height);
+        };
+        draw_help(core, font_weight, raster_height);
 
         //Start of Present
         let present_time_start = Instant::now();
@@ -330,16 +380,16 @@ fn main_loop(core: &mut Core) {
 }
 
 fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHeight) {
-    let stats_x_pos = 520;
+    let x_pos = 520;
     let frame_rate = core.stats.frame_rate;
     let msg = format!("Frame Rate       {frame_rate:.0} FPS");
-    draw_string(msg, stats_x_pos, 0, font_weight, raster_height, core);
+    draw_string(msg.as_str(), x_pos, 0, font_weight, raster_height, core);
 
     let trans_and_proj_time_ms = core.stats.trans_and_proj_time * 1000.;
     let msg = format!("Trans. & Proj      {trans_and_proj_time_ms:.0} ms");
     draw_string(
-        msg,
-        stats_x_pos,
+        msg.as_str(),
+        x_pos,
         raster_height as u32,
         font_weight,
         raster_height,
@@ -349,8 +399,8 @@ fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHei
     let raster_time_ms = core.stats.raster_time * 1000.;
     let msg = format!("Raster             {raster_time_ms:.0} ms");
     draw_string(
-        msg,
-        stats_x_pos,
+        msg.as_str(),
+        x_pos,
         2 * raster_height as u32,
         font_weight,
         raster_height,
@@ -360,8 +410,8 @@ fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHei
     let present_time_ms = core.stats.present_time * 1000.;
     let msg = format!("Present            {present_time_ms:.0} us");
     draw_string(
-        msg,
-        stats_x_pos,
+        msg.as_str(),
+        x_pos,
         3 * raster_height as u32,
         font_weight,
         raster_height,
@@ -371,8 +421,8 @@ fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHei
     let vis_tris = core.stats.vis_tris;
     let msg = format!("Visible tris.   {vis_tris}");
     draw_string(
-        msg,
-        stats_x_pos,
+        msg.as_str(),
+        x_pos,
         4 * raster_height as u32,
         font_weight,
         raster_height,
@@ -380,8 +430,50 @@ fn draw_stats(core: &mut Core, font_weight: FontWeight, raster_height: RasterHei
     );
 }
 
+fn draw_help(core: &mut Core, font_weight: FontWeight, raster_height: RasterHeight) {
+    let x_pos = 0;
+
+    let msg: Vec<&str>;
+
+    if core.help_enabled {
+        msg = vec![
+            "LMB   Select object",
+            "RMB   Rotate object",
+            "MMB   Pan object (XZ) plane",
+            "Wheel Translate object (Y axis)",
+            "-------------------------------",
+            "W     Move Forwards",
+            "A     Move Left",
+            "S     Move Backwards",
+            "D     Move Right",
+            "<-    Yaw CCW",
+            "->    Yaw CW",
+            "-------------------------------",
+            "H     Toggle Help",
+            "L     Toggle Wireframe Mode",
+            "P     Toggle Stats",
+            "B     Toggle Back Face Culling",
+        ];
+    } else {
+        msg = vec!["Press H to toggle Help"];
+    }
+
+    let mut i = 0;
+    for msg in msg {
+        draw_string(
+            msg,
+            x_pos,
+            i * raster_height as u32,
+            font_weight,
+            raster_height,
+            core,
+        );
+        i += 1;
+    }
+}
+
 fn draw_string(
-    msg: String,
+    msg: &str,
     x: u32,
     y: u32,
     font_weight: FontWeight,
