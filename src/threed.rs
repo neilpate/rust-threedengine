@@ -8,7 +8,7 @@ use ndarray::Array;
 
 use crate::colour::*;
 
-use float_eq::{assert_float_eq, derive_float_eq, float_eq};
+use float_eq::{derive_float_eq, float_eq};
 
 pub struct Transform {
     pub position: vec3,
@@ -53,7 +53,7 @@ pub struct Camera {
     all_tol = "f32"
 )]
 #[derive(Debug, PartialEq, Clone, Copy)]
-struct AFQ {
+pub(crate) struct AFQ {
     aspect_ratio: f32,
     fov: f32,
     q: f32,
@@ -191,7 +191,7 @@ impl Object {
 
 pub use Vert as vec3;
 
-fn calc_afq(screen: &Screen, camera: &Camera) -> AFQ {
+pub(crate) fn calc_afq(screen: &Screen, camera: &Camera) -> AFQ {
     let aspect_ratio = (screen.height as f32) / (screen.width as f32);
 
     let fov = 1. / ((camera.fov / 2.).to_radians().tan());
@@ -293,7 +293,7 @@ pub fn create_view_matrix(cam_rotation: f32, cam_pos: vec3) -> Array2<f32> {
     vm
 }
 
-fn point_at(pos: vec3, target: vec3, up: vec3) -> Array2<f32> {
+pub(crate) fn point_at(pos: vec3, target: vec3, up: vec3) -> Array2<f32> {
     let new_forward = target - pos;
     let new_forward_norm = normalise_vec(&new_forward);
 
@@ -381,7 +381,7 @@ pub fn quick_invert_mat4(mat: Array2<f32>) -> Array2<f32> {
     out
 }
 
-fn normalise_vec(vec: &vec3) -> vec3 {
+pub(crate) fn normalise_vec(vec: &vec3) -> vec3 {
     let x = vec.x.powf(2.);
     let y = vec.y.powf(2.);
     let z = vec.z.powf(2.);
@@ -410,7 +410,7 @@ fn dot_product(v1: vec3, v2: vec3) -> f32 {
     (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z)
 }
 
-fn cross_product(v1: vec3, v2: vec3) -> vec3 {
+pub(crate) fn cross_product(v1: vec3, v2: vec3) -> vec3 {
     let x = v1.y * v2.z - v1.z * v2.y;
     let y = v1.z * v2.x - v1.x * v2.z;
     let z = v1.x * v2.y - v1.y * v2.x;
@@ -426,460 +426,467 @@ pub fn calc_tri_illum(light_dir: &vec3, tri_normal: &vec3, colour: Colour) -> Co
     colour.scale(factor)
 }
 
-#[test]
-fn test_calc_tri_illum() {
-    // let expected = 961644u32;
-    let expected = Colour::from_u32(961644);
-
-    let light_dir = vec3 {
-        x: 1.,
-        y: 2.,
-        z: 3.,
-    };
-
-    let tri_normal = vec3 {
-        x: -2.,
-        y: 4.,
-        z: -1.,
-    };
-
-    let colour = Colour::from_u32(1234567);
-
-    let actual = calc_tri_illum(&light_dir, &tri_normal, colour);
-
-    assert_eq!(expected, actual);
-}
-
-#[test]
-fn test_calc_tri_illum2() {
-    let expected = Colour::from_u32(2766878);
-
-    let light_dir = vec3 {
-        x: 0.,
-        y: 10.,
-        z: -10.,
-    };
-
-    let tri_normal = vec3 {
-        x: 0.766045,
-        y: -0.271654,
-        z: -0.582563,
-    };
-
-    let colour = Colour::from_u32(1234567);
-
-    let actual = calc_tri_illum(&light_dir, &tri_normal, colour);
-
-    assert_eq!(expected, actual);
-}
-
-#[test]
-fn test_quick_invert() {
-    let expected = arr2(&[
-        [1., 4., 7., 0.],
-        [2., 5., 8., 0.],
-        [3., 6., 9., 0.],
-        [14., 32., 50., 1.],
-    ]);
-
-    let in_mat = arr2(&[
-        [1., 2., 3., 0.],
-        [4., 5., 6., 0.],
-        [7., 8., 9., 0.],
-        [-1., -2., -3., 1.],
-    ]);
-
-    let result = quick_invert_mat4(in_mat);
-
-    assert_float_eq!(
-        expected.into_raw_vec(),
-        result.into_raw_vec(),
-        abs_all <= 0.0001
-    );
-}
-
-#[test]
-fn test_create_translation_matrix() {
-    let expected = arr2(&[
-        [1., 0., 0., 0.],
-        [0., 1., 0., 0.],
-        [0., 0., 1., 0.],
-        [1., 2., 3., 1.],
-    ]);
-
-    let result = create_translation_matrix(1., 2., 3.);
-
-    assert_float_eq!(
-        expected.into_raw_vec(),
-        result.into_raw_vec(),
-        abs_all <= 0.0001
-    );
-}
-
-#[test]
-fn test_create_view_matrix() {
-    let expected = arr2(&[
-        [0.766044, 0., -0.642788, 0.],
-        [0., 1., 0., 0.],
-        [0.642788, 0., 0.766044, 0.],
-        [-4.10324, -3., -1.7786, 1.],
-    ]);
-
-    let cam_pos = vec3 {
-        x: 2.,
-        y: 3.,
-        z: 4.,
-    };
-
-    let cam_rotation = 40.;
-
-    let result = create_view_matrix(cam_rotation, cam_pos);
-
-    assert_float_eq!(
-        expected.into_raw_vec(),
-        result.into_raw_vec(),
-        abs_all <= 0.0001
-    );
-}
-
-#[test]
-fn test_point_at() {
-    let expected = arr2(&[
-        [-0.40824, 0.816497, -0.40824, 0.],
-        [-0.707108, 0., 0.707105, 0.],
-        [0.57735, 0.57735, 0.57735, 0.],
-        [1., 2., 3., 1.],
-    ]);
-
-    let pos = vec3 {
-        x: 1.,
-        y: 2.,
-        z: 3.,
-    };
-
-    let target = vec3 {
-        x: 4.,
-        y: 5.,
-        z: 6.,
-    };
-
-    let up = vec3 {
-        x: 7.,
-        y: 8.,
-        z: 9.,
-    };
-
-    let result = point_at(pos, target, up);
-
-    assert_float_eq!(
-        expected.into_raw_vec(),
-        result.into_raw_vec(),
-        abs_all <= 0.0001
-    );
-}
-
-#[test]
-fn test_cross_product() {
-    let expected = vec3 {
-        x: 0.5,
-        y: 6.,
-        z: -5.5,
-    };
-
-    let v1 = vec3 {
-        x: 2.,
-        y: 3.5,
-        z: 4.,
-    };
-
-    let v2 = vec3 {
-        x: 5.,
-        y: 6.,
-        z: 7.,
-    };
-
-    let result = cross_product(v1, v2);
-
-    assert_float_eq!(expected, result, abs_all <= 0.0001);
-}
-
-#[test]
-fn test_normalise_vec() {
-    let expected = vec3 {
-        x: 0.48,
-        y: 0.5724,
-        z: 0.6647,
-    };
-
-    let input = vec3 {
-        x: 52.,
-        y: 62.,
-        z: 72.,
-    };
-
-    let result = normalise_vec(&input);
-
-    assert_float_eq!(expected, result, abs_all <= 0.0001);
-}
-
-#[test]
-fn test_normal() {
-    let expected = vec3 {
-        x: 0.935472,
-        y: -0.311824,
-        z: -0.166306,
-    };
-
-    let v1 = vec3 {
-        x: 1.,
-        y: -2.,
-        z: 5.,
-    };
-
-    let v2 = vec3 {
-        x: 2.,
-        y: 9.,
-        z: -10.,
-    };
-
-    let v3 = vec3 {
-        x: 3.,
-        y: 4.,
-        z: 5.,
-    };
-
-    let tri = Tri { v1, v2, v3 };
-
-    let result = normal(&tri);
-
-    assert_float_eq!(expected, result, abs_all <= 0.0001);
-}
-
-#[test]
-fn test_create_x_rotation_matrix() {
-    let expected = arr2(&[
-        [1f32, 0., 0., 0.],
-        [0., 0.93969262f32, 0.342020150, 0.],
-        [0., -0.34202015, 0.93969262, 0.],
-        [0., 0., 0., 1.],
-    ]);
-
-    let result = create_x_rotation_matrix(20.);
-
-    assert_float_eq!(
-        expected.into_raw_vec(),
-        result.into_raw_vec(),
-        abs_all <= 0.0001
-    );
-}
-
-#[test]
-fn test_create_y_rotation_matrix() {
-    let expected = arr2(&[
-        [0.93969262f32, 0., 0.34202015, 0.],
-        [0., 1., 0., 0.],
-        [-0.34202015, 0., 0.93969262, 0.],
-        [0., 0., 0., 1.],
-    ]);
-
-    let result = create_y_rotation_matrix(20.);
-
-    assert_float_eq!(
-        expected.into_raw_vec(),
-        result.into_raw_vec(),
-        abs_all <= 0.0001
-    );
-}
-
-#[test]
-fn test_create_z_rotation_matrix() {
-    let expected = arr2(&[
-        [0.93969262f32, 0.34202015, 0., 0.],
-        [-0.34202015, 0.93969262, 0., 0.],
-        [0., 0., 1., 0.],
-        [0., 0., 0., 1.],
-    ]);
-
-    let result = create_z_rotation_matrix(20.);
-
-    assert_float_eq!(
-        expected.into_raw_vec(),
-        result.into_raw_vec(),
-        abs_all <= 0.0001
-    );
-}
-
-#[test]
-fn test_mult_vec_matrix_1() {
-    let expected = vec3 {
-        x: 52.,
-        y: 62.,
-        z: 72.,
-    };
-
-    let vec = vec3 {
-        x: 2.,
-        y: 3.,
-        z: 4.,
-    };
-
-    let matrix = arr2(&[
-        [1., 2., 3., 0.],
-        [4., 5., 6., 0.],
-        [7., 8., 9., 0.],
-        [10., 11., 12., 0.],
-    ]);
-
-    let result = mult_vec3_mat4(vec, &matrix);
-
-    assert_float_eq!(expected, result, abs_all <= 0.0001);
-}
-
-#[test]
-fn test_mult_vec_matrix_2() {
-    let expected = vec3 {
-        x: 10.86,
-        y: -13.2,
-        z: 0.7,
-    };
-
-    let vec = vec3 {
-        x: 0.2,
-        y: -1.3,
-        z: 0.9,
-    };
-
-    let matrix = arr2(&[
-        [-1.2, 2., 3., 0.],
-        [4., 5., 6., 0.],
-        [7., -8., 9., 0.],
-        [10., 0.1, -0.2, 0.],
-    ]);
-
-    let result = mult_vec3_mat4(vec, &matrix);
-
-    assert_float_eq!(expected, result, abs_all <= 0.0001);
-}
-
-#[test]
-fn test_mult_vec_matrix_3() {
-    let expected = vec3 {
-        x: 10.86,
-        y: -13.2,
-        z: 0.7,
-    };
-
-    let vec = vec3 {
-        x: 0.2,
-        y: -1.3,
-        z: 0.9,
-    };
-
-    let matrix = arr2(&[
-        [-1.2, 2., 3., 0.],
-        [4., 5., 6., 0.],
-        [7., -8., 9., 0.],
-        [10., 0.1, -0.2, 0.],
-    ]);
-
-    let result = mult_vec3_mat4(vec, &matrix);
-
-    assert_float_eq!(expected, result, abs_all <= 0.0001);
-}
-
-#[test]
-fn test_mult_vec_matrix_4() {
-    let expected = vec3 {
-        x: -0.061859,
-        y: -0.494872,
-        z: 0.995338,
-    };
-
-    let vec = vec3 {
-        x: -1.,
-        y: -6.,
-        z: 21.,
-    };
-
-    let matrix = arr2(&[
-        [1.29904, 0., 0., 0.],
-        [0., 1.73205, 0., 0.],
-        [0., 0., 1.0001, 1.],
-        [0., 0., -0.10001, 0.],
-    ]);
-
-    let result = mult_vec3_mat4(vec, &matrix);
-
-    assert_float_eq!(expected, result, abs_all <= 0.0001);
-}
-
-#[test]
-fn test_create_projection_matrix_1() {
-    let expected = arr2(&[
-        [1.2990382, 0., 0., 0.],
-        [0., 1.7320509, 0., 0.],
-        [0., 0., 1.0001, 1.],
-        [0., 0., -0.10001, 0.],
-    ]);
-
-    let screen = Screen {
-        width: 800,
-        height: 600,
-    };
-    let camera = Camera {
-        fov: 60.,
-        near_plane: 0.1,
-        far_plane: 1000.,
-    };
-
-    let result = create_projection_matrix(screen, camera);
-
-    assert_eq!(expected, result);
-}
-
-#[test]
-fn test_create_projection_matrix_2() {
-    let expected = arr2(&[
-        [0.65161270, 0., 0., 0.],
-        [0., 1.3032254, 0., 0.],
-        [0., 0., 1.001001, 1.],
-        [0., 0., -2.002002, 0.],
-    ]);
-
-    let screen = Screen {
-        width: 900,
-        height: 450,
-    };
-    let camera = Camera {
-        fov: 75.,
-        near_plane: 2.,
-        far_plane: 2000.,
-    };
-
-    let result = create_projection_matrix(screen, camera);
-
-    assert_eq!(expected, result);
-}
-
-#[test]
-fn test_calc_afq() {
-    let expected = AFQ {
-        aspect_ratio: 0.75,
-        fov: 1.73205,
-        q: 1.0001,
-    };
-
-    let screen = Screen {
-        width: 800,
-        height: 600,
-    };
-    let camera = Camera {
-        fov: 60.,
-        near_plane: 0.1,
-        far_plane: 1000.,
-    };
-
-    let result = calc_afq(&screen, &camera);
-
-    assert_float_eq!(expected, result, abs_all <= 0.0001);
+#[cfg(test)]
+mod tests {
+    use crate::*;
+    use float_eq::assert_float_eq;
+    use ndarray::arr2;
+
+    #[test]
+    fn test_calc_tri_illum() {
+        // let expected = 961644u32;
+        let expected = Colour::from_u32(961644);
+
+        let light_dir = vec3 {
+            x: 1.,
+            y: 2.,
+            z: 3.,
+        };
+
+        let tri_normal = vec3 {
+            x: -2.,
+            y: 4.,
+            z: -1.,
+        };
+
+        let colour = Colour::from_u32(1234567);
+
+        let actual = calc_tri_illum(&light_dir, &tri_normal, colour);
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_calc_tri_illum2() {
+        let expected = Colour::from_u32(2766878);
+
+        let light_dir = vec3 {
+            x: 0.,
+            y: 10.,
+            z: -10.,
+        };
+
+        let tri_normal = vec3 {
+            x: 0.766045,
+            y: -0.271654,
+            z: -0.582563,
+        };
+
+        let colour = Colour::from_u32(1234567);
+
+        let actual = calc_tri_illum(&light_dir, &tri_normal, colour);
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_quick_invert() {
+        let expected = arr2(&[
+            [1., 4., 7., 0.],
+            [2., 5., 8., 0.],
+            [3., 6., 9., 0.],
+            [14., 32., 50., 1.],
+        ]);
+
+        let in_mat = arr2(&[
+            [1., 2., 3., 0.],
+            [4., 5., 6., 0.],
+            [7., 8., 9., 0.],
+            [-1., -2., -3., 1.],
+        ]);
+
+        let result = quick_invert_mat4(in_mat);
+
+        assert_float_eq!(
+            expected.into_raw_vec(),
+            result.into_raw_vec(),
+            abs_all <= 0.0001
+        );
+    }
+
+    #[test]
+    fn test_create_translation_matrix() {
+        let expected = arr2(&[
+            [1., 0., 0., 0.],
+            [0., 1., 0., 0.],
+            [0., 0., 1., 0.],
+            [1., 2., 3., 1.],
+        ]);
+
+        let result = create_translation_matrix(1., 2., 3.);
+
+        assert_float_eq!(
+            expected.into_raw_vec(),
+            result.into_raw_vec(),
+            abs_all <= 0.0001
+        );
+    }
+
+    #[test]
+    fn test_create_view_matrix() {
+        let expected = arr2(&[
+            [0.766044, 0., -0.642788, 0.],
+            [0., 1., 0., 0.],
+            [0.642788, 0., 0.766044, 0.],
+            [-4.10324, -3., -1.7786, 1.],
+        ]);
+
+        let cam_pos = vec3 {
+            x: 2.,
+            y: 3.,
+            z: 4.,
+        };
+
+        let cam_rotation = 40.;
+
+        let result = create_view_matrix(cam_rotation, cam_pos);
+
+        assert_float_eq!(
+            expected.into_raw_vec(),
+            result.into_raw_vec(),
+            abs_all <= 0.0001
+        );
+    }
+
+    #[test]
+    fn test_point_at() {
+        let expected = arr2(&[
+            [-0.40824, 0.816497, -0.40824, 0.],
+            [-0.707108, 0., 0.707105, 0.],
+            [0.57735, 0.57735, 0.57735, 0.],
+            [1., 2., 3., 1.],
+        ]);
+
+        let pos = vec3 {
+            x: 1.,
+            y: 2.,
+            z: 3.,
+        };
+
+        let target = vec3 {
+            x: 4.,
+            y: 5.,
+            z: 6.,
+        };
+
+        let up = vec3 {
+            x: 7.,
+            y: 8.,
+            z: 9.,
+        };
+
+        let result = point_at(pos, target, up);
+
+        assert_float_eq!(
+            expected.into_raw_vec(),
+            result.into_raw_vec(),
+            abs_all <= 0.0001
+        );
+    }
+
+    #[test]
+    fn test_cross_product() {
+        let expected = vec3 {
+            x: 0.5,
+            y: 6.,
+            z: -5.5,
+        };
+
+        let v1 = vec3 {
+            x: 2.,
+            y: 3.5,
+            z: 4.,
+        };
+
+        let v2 = vec3 {
+            x: 5.,
+            y: 6.,
+            z: 7.,
+        };
+
+        let result = cross_product(v1, v2);
+
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
+    }
+
+    #[test]
+    fn test_normalise_vec() {
+        let expected = vec3 {
+            x: 0.48,
+            y: 0.5724,
+            z: 0.6647,
+        };
+
+        let input = vec3 {
+            x: 52.,
+            y: 62.,
+            z: 72.,
+        };
+
+        let result = normalise_vec(&input);
+
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
+    }
+
+    #[test]
+    fn test_normal() {
+        let expected = vec3 {
+            x: 0.935472,
+            y: -0.311824,
+            z: -0.166306,
+        };
+
+        let v1 = vec3 {
+            x: 1.,
+            y: -2.,
+            z: 5.,
+        };
+
+        let v2 = vec3 {
+            x: 2.,
+            y: 9.,
+            z: -10.,
+        };
+
+        let v3 = vec3 {
+            x: 3.,
+            y: 4.,
+            z: 5.,
+        };
+
+        let tri = Tri { v1, v2, v3 };
+
+        let result = normal(&tri);
+
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
+    }
+
+    #[test]
+    fn test_create_x_rotation_matrix() {
+        let expected = arr2(&[
+            [1f32, 0., 0., 0.],
+            [0., 0.93969262f32, 0.342020150, 0.],
+            [0., -0.34202015, 0.93969262, 0.],
+            [0., 0., 0., 1.],
+        ]);
+
+        let result = create_x_rotation_matrix(20.);
+
+        assert_float_eq!(
+            expected.into_raw_vec(),
+            result.into_raw_vec(),
+            abs_all <= 0.0001
+        );
+    }
+
+    #[test]
+    fn test_create_y_rotation_matrix() {
+        let expected = arr2(&[
+            [0.93969262f32, 0., 0.34202015, 0.],
+            [0., 1., 0., 0.],
+            [-0.34202015, 0., 0.93969262, 0.],
+            [0., 0., 0., 1.],
+        ]);
+
+        let result = create_y_rotation_matrix(20.);
+
+        assert_float_eq!(
+            expected.into_raw_vec(),
+            result.into_raw_vec(),
+            abs_all <= 0.0001
+        );
+    }
+
+    #[test]
+    fn test_create_z_rotation_matrix() {
+        let expected = arr2(&[
+            [0.93969262f32, 0.34202015, 0., 0.],
+            [-0.34202015, 0.93969262, 0., 0.],
+            [0., 0., 1., 0.],
+            [0., 0., 0., 1.],
+        ]);
+
+        let result = create_z_rotation_matrix(20.);
+
+        assert_float_eq!(
+            expected.into_raw_vec(),
+            result.into_raw_vec(),
+            abs_all <= 0.0001
+        );
+    }
+
+    #[test]
+    fn test_mult_vec_matrix_1() {
+        let expected = vec3 {
+            x: 52.,
+            y: 62.,
+            z: 72.,
+        };
+
+        let vec = vec3 {
+            x: 2.,
+            y: 3.,
+            z: 4.,
+        };
+
+        let matrix = arr2(&[
+            [1., 2., 3., 0.],
+            [4., 5., 6., 0.],
+            [7., 8., 9., 0.],
+            [10., 11., 12., 0.],
+        ]);
+
+        let result = mult_vec3_mat4(vec, &matrix);
+
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
+    }
+
+    #[test]
+    fn test_mult_vec_matrix_2() {
+        let expected = vec3 {
+            x: 10.86,
+            y: -13.2,
+            z: 0.7,
+        };
+
+        let vec = vec3 {
+            x: 0.2,
+            y: -1.3,
+            z: 0.9,
+        };
+
+        let matrix = arr2(&[
+            [-1.2, 2., 3., 0.],
+            [4., 5., 6., 0.],
+            [7., -8., 9., 0.],
+            [10., 0.1, -0.2, 0.],
+        ]);
+
+        let result = mult_vec3_mat4(vec, &matrix);
+
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
+    }
+
+    #[test]
+    fn test_mult_vec_matrix_3() {
+        let expected = vec3 {
+            x: 10.86,
+            y: -13.2,
+            z: 0.7,
+        };
+
+        let vec = vec3 {
+            x: 0.2,
+            y: -1.3,
+            z: 0.9,
+        };
+
+        let matrix = arr2(&[
+            [-1.2, 2., 3., 0.],
+            [4., 5., 6., 0.],
+            [7., -8., 9., 0.],
+            [10., 0.1, -0.2, 0.],
+        ]);
+
+        let result = mult_vec3_mat4(vec, &matrix);
+
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
+    }
+
+    #[test]
+    fn test_mult_vec_matrix_4() {
+        let expected = vec3 {
+            x: -0.061859,
+            y: -0.494872,
+            z: 0.995338,
+        };
+
+        let vec = vec3 {
+            x: -1.,
+            y: -6.,
+            z: 21.,
+        };
+
+        let matrix = arr2(&[
+            [1.29904, 0., 0., 0.],
+            [0., 1.73205, 0., 0.],
+            [0., 0., 1.0001, 1.],
+            [0., 0., -0.10001, 0.],
+        ]);
+
+        let result = mult_vec3_mat4(vec, &matrix);
+
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
+    }
+
+    #[test]
+    fn test_create_projection_matrix_1() {
+        let expected = arr2(&[
+            [1.2990382, 0., 0., 0.],
+            [0., 1.7320509, 0., 0.],
+            [0., 0., 1.0001, 1.],
+            [0., 0., -0.10001, 0.],
+        ]);
+
+        let screen = Screen {
+            width: 800,
+            height: 600,
+        };
+        let camera = Camera {
+            fov: 60.,
+            near_plane: 0.1,
+            far_plane: 1000.,
+        };
+
+        let result = create_projection_matrix(screen, camera);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_create_projection_matrix_2() {
+        let expected = arr2(&[
+            [0.65161270, 0., 0., 0.],
+            [0., 1.3032254, 0., 0.],
+            [0., 0., 1.001001, 1.],
+            [0., 0., -2.002002, 0.],
+        ]);
+
+        let screen = Screen {
+            width: 900,
+            height: 450,
+        };
+        let camera = Camera {
+            fov: 75.,
+            near_plane: 2.,
+            far_plane: 2000.,
+        };
+
+        let result = create_projection_matrix(screen, camera);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_calc_afq() {
+        let expected = AFQ {
+            aspect_ratio: 0.75,
+            fov: 1.73205,
+            q: 1.0001,
+        };
+
+        let screen = Screen {
+            width: 800,
+            height: 600,
+        };
+        let camera = Camera {
+            fov: 60.,
+            near_plane: 0.1,
+            far_plane: 1000.,
+        };
+
+        let result = calc_afq(&screen, &camera);
+
+        assert_float_eq!(expected, result, abs_all <= 0.0001);
+    }
 }
