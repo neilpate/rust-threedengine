@@ -1,7 +1,8 @@
 // To Do
-// Mouse object selection
+// [done] Move tests to separate files
 // [done] Mouse object rotation
 // [done] Mouse object translation
+// Mouse object selection
 // Movable light source
 // Orthographic camera
 // Objectg colour change in real-time
