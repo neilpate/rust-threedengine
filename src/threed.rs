@@ -43,6 +43,65 @@ pub struct Camera {
     pub fov: f32,
     pub near_plane: f32,
     pub far_plane: f32,
+    pub yaw: f32,
+    pub position: vec3,
+}
+
+impl Camera {
+    pub fn create_view_matrix(&self) -> Array2<f32> {
+        let rot_mat = create_y_rotation_matrix(self.yaw);
+
+        let target = vec3 {
+            x: 0.,
+            y: 0.,
+            z: 1.,
+        };
+        let mut target_vert = mult_vec3_mat4(target, &rot_mat);
+
+        target_vert = target_vert + self.position;
+
+        let up = vec3 {
+            x: 0.,
+            y: 1.,
+            z: 0.,
+        };
+
+        let point_at = point_at(self.position, target_vert, up);
+
+        let vm = quick_invert_mat4(point_at);
+        vm
+    }
+
+    pub fn create_projection_matrix(&self, screen: Screen) -> Array<f32, Ix2> {
+        let afq = self.calc_afq(&screen);
+
+        let mut m = arr2(&[
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+            [0., 0., 0., 1.],
+            [0., 0., 0., 0.],
+        ]);
+
+        m[[0, 0]] = afq.aspect_ratio * afq.fov;
+        m[[1, 1]] = afq.fov;
+        m[[2, 2]] = afq.q;
+        m[[3, 2]] = -1. * afq.q * self.near_plane;
+
+        m
+    }
+
+    pub(crate) fn calc_afq(&self, screen: &Screen) -> AFQ {
+        let aspect_ratio = (screen.height as f32) / (screen.width as f32);
+
+        let fov = 1. / ((self.fov / 2.).to_radians().tan());
+
+        let q = self.far_plane / (self.far_plane - self.near_plane);
+        AFQ {
+            aspect_ratio,
+            fov,
+            q,
+        }
+    }
 }
 
 #[derive_float_eq(
@@ -191,37 +250,6 @@ impl Object {
 
 pub use Vert as vec3;
 
-pub(crate) fn calc_afq(screen: &Screen, camera: &Camera) -> AFQ {
-    let aspect_ratio = (screen.height as f32) / (screen.width as f32);
-
-    let fov = 1. / ((camera.fov / 2.).to_radians().tan());
-
-    let q = camera.far_plane / (camera.far_plane - camera.near_plane);
-    AFQ {
-        aspect_ratio,
-        fov,
-        q,
-    }
-}
-
-pub fn create_projection_matrix(screen: Screen, camera: Camera) -> Array<f32, Ix2> {
-    let afq = calc_afq(&screen, &camera);
-
-    let mut m = arr2(&[
-        [0., 0., 0., 0.],
-        [0., 0., 0., 0.],
-        [0., 0., 0., 1.],
-        [0., 0., 0., 0.],
-    ]);
-
-    m[[0, 0]] = afq.aspect_ratio * afq.fov;
-    m[[1, 1]] = afq.fov;
-    m[[2, 2]] = afq.q;
-    m[[3, 2]] = -1. * afq.q * camera.near_plane;
-
-    m
-}
-
 pub fn create_x_rotation_matrix(angle_deg: f32) -> Array2<f32> {
     let mut m = Array::<f32, _>::eye(4);
 
@@ -267,30 +295,6 @@ pub fn create_translation_matrix(x: f32, y: f32, z: f32) -> Array2<f32> {
     tm[[3, 1]] = y;
     tm[[3, 2]] = z;
     tm
-}
-
-pub fn create_view_matrix(cam_rotation: f32, cam_pos: vec3) -> Array2<f32> {
-    let rot_mat = create_y_rotation_matrix(cam_rotation);
-
-    let target = vec3 {
-        x: 0.,
-        y: 0.,
-        z: 1.,
-    };
-    let mut target_vert = mult_vec3_mat4(target, &rot_mat);
-
-    target_vert = target_vert + cam_pos;
-
-    let up = vec3 {
-        x: 0.,
-        y: 1.,
-        z: 0.,
-    };
-
-    let point_at = point_at(cam_pos, target_vert, up);
-
-    let vm = quick_invert_mat4(point_at);
-    vm
 }
 
 pub(crate) fn point_at(pos: vec3, target: vec3, up: vec3) -> Array2<f32> {
@@ -531,15 +535,23 @@ mod tests {
             [-4.10324, -3., -1.7786, 1.],
         ]);
 
-        let cam_pos = vec3 {
+        let position = vec3 {
             x: 2.,
             y: 3.,
             z: 4.,
         };
 
-        let cam_rotation = 40.;
+        let yaw = 40.;
 
-        let result = create_view_matrix(cam_rotation, cam_pos);
+        let cam = Camera {
+            far_plane: 0.,
+            near_plane: 0.,
+            fov: 60.,
+            position,
+            yaw,
+        };
+
+        let result = cam.create_view_matrix();
 
         assert_float_eq!(
             expected.into_raw_vec(),
@@ -836,9 +848,15 @@ mod tests {
             fov: 60.,
             near_plane: 0.1,
             far_plane: 1000.,
+            position: vec3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+            yaw: 0.,
         };
 
-        let result = create_projection_matrix(screen, camera);
+        let result = camera.create_projection_matrix(screen);
 
         assert_eq!(expected, result);
     }
@@ -860,9 +878,15 @@ mod tests {
             fov: 75.,
             near_plane: 2.,
             far_plane: 2000.,
+            position: vec3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+            yaw: 0.,
         };
 
-        let result = create_projection_matrix(screen, camera);
+        let result = camera.create_projection_matrix(screen);
 
         assert_eq!(expected, result);
     }
@@ -883,9 +907,15 @@ mod tests {
             fov: 60.,
             near_plane: 0.1,
             far_plane: 1000.,
+            position: vec3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+            yaw: 0.,
         };
 
-        let result = calc_afq(&screen, &camera);
+        let result = camera.calc_afq(&screen);
 
         assert_float_eq!(expected, result, abs_all <= 0.0001);
     }

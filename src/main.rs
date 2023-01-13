@@ -46,9 +46,7 @@ struct Stats {
 struct Core {
     view_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
     proj_mat: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-    cam_pos: vec3,
-    _cam_pitch: f32,
-    cam_yaw: f32,
+    camera: Camera,
     light_dir: vec3,
     window: Window,
     pixel_buffer: Vec<u32>,
@@ -80,13 +78,6 @@ fn init() -> Core {
         width: 800,
         height: 600,
     };
-    let camera = Camera {
-        fov: 60.,
-        near_plane: 0.1,
-        far_plane: 1000.,
-    };
-
-    let proj_mat = create_projection_matrix(screen, camera);
 
     let cam_pos = vec3 {
         x: 0.,
@@ -94,7 +85,17 @@ fn init() -> Core {
         z: -20.,
     };
 
-    let view_mat = create_view_matrix(0., cam_pos);
+    let camera = Camera {
+        fov: 60.,
+        near_plane: 0.1,
+        far_plane: 1000.,
+        position: cam_pos,
+        yaw: 0.,
+    };
+
+    let proj_mat = camera.create_projection_matrix(screen);
+
+    let view_mat = camera.create_view_matrix();
 
     let light_dir = vec3 {
         x: 0.,
@@ -142,9 +143,7 @@ fn init() -> Core {
     Core {
         view_mat,
         proj_mat,
-        cam_pos,
-        _cam_pitch: 0.,
-        cam_yaw: 0.,
+        camera,
         light_dir,
         window,
         pixel_buffer,
@@ -186,33 +185,33 @@ fn handle_keys(core: &mut Core) {
     }
 
     if core.window.is_key_pressed(Key::W, KeyRepeat::Yes) {
-        core.cam_pos.z = core.cam_pos.z + 1.;
-        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+        core.camera.position.z = core.camera.position.z + 1.;
+        core.view_mat = core.camera.create_view_matrix();
     }
 
     if core.window.is_key_pressed(Key::S, KeyRepeat::Yes) {
-        core.cam_pos.z = core.cam_pos.z - 1.;
-        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+        core.camera.position.z = core.camera.position.z - 1.;
+        core.view_mat = core.camera.create_view_matrix();
     }
 
     if core.window.is_key_pressed(Key::A, KeyRepeat::Yes) {
-        core.cam_pos.x = core.cam_pos.x - 1.;
-        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+        core.camera.position.x = core.camera.position.x - 1.;
+        core.view_mat = core.camera.create_view_matrix();
     }
 
     if core.window.is_key_pressed(Key::D, KeyRepeat::Yes) {
-        core.cam_pos.x = core.cam_pos.x + 1.;
-        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+        core.camera.position.x = core.camera.position.x + 1.;
+        core.view_mat = core.camera.create_view_matrix();
     }
 
     if core.window.is_key_pressed(Key::Left, KeyRepeat::Yes) {
-        core.cam_yaw = core.cam_yaw + 5.;
-        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+        core.camera.yaw = core.camera.yaw + 5.;
+        core.view_mat = core.camera.create_view_matrix();
     }
 
     if core.window.is_key_pressed(Key::Right, KeyRepeat::Yes) {
-        core.cam_yaw = core.cam_yaw - 5.;
-        core.view_mat = create_view_matrix(core.cam_yaw, core.cam_pos);
+        core.camera.yaw = core.camera.yaw - 5.;
+        core.view_mat = core.camera.create_view_matrix();
     }
 }
 
