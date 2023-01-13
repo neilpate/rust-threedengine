@@ -45,6 +45,8 @@ pub struct Camera {
     pub far_plane: f32,
     pub yaw: f32,
     pub position: vec3,
+    pub fwd_speed: f32,
+    pub yaw_speed: f32,
 }
 
 impl Camera {
@@ -90,7 +92,7 @@ impl Camera {
         m
     }
 
-    pub(crate) fn calc_afq(&self, screen: &Screen) -> AFQ {
+    fn calc_afq(&self, screen: &Screen) -> AFQ {
         let aspect_ratio = (screen.height as f32) / (screen.width as f32);
 
         let fov = 1. / ((self.fov / 2.).to_radians().tan());
@@ -101,6 +103,46 @@ impl Camera {
             fov,
             q,
         }
+    }
+
+    pub fn move_forwards(&mut self) {
+        let rot_rad = self.yaw.to_radians();
+        let (sin, cos) = rot_rad.sin_cos();
+        let new_fwd = self.position.z + self.fwd_speed * cos;
+        let new_left = self.position.x - self.fwd_speed * sin;
+
+        self.position.z = new_fwd;
+        self.position.x = new_left;
+    }
+
+    pub fn move_backwards(&mut self) {
+        let rot_rad = self.yaw.to_radians();
+        let (sin, cos) = rot_rad.sin_cos();
+        let new_fwd = self.position.z - self.fwd_speed * cos;
+        let new_left = self.position.x + self.fwd_speed * sin;
+
+        self.position.z = new_fwd;
+        self.position.x = new_left;
+    }
+
+    pub fn move_left(&mut self) {
+        let rot_rad = self.yaw.to_radians();
+        let (sin, cos) = rot_rad.sin_cos();
+        let new_fwd = self.position.z - self.fwd_speed * sin;
+        let new_left = self.position.x - self.fwd_speed * cos;
+
+        self.position.z = new_fwd;
+        self.position.x = new_left;
+    }
+
+    pub fn move_right(&mut self) {
+        let rot_rad = self.yaw.to_radians();
+        let (sin, cos) = rot_rad.sin_cos();
+        let new_fwd = self.position.z + self.fwd_speed * sin;
+        let new_left = self.position.x + self.fwd_speed * cos;
+
+        self.position.z = new_fwd;
+        self.position.x = new_left;
     }
 }
 
@@ -437,7 +479,7 @@ mod tests {
     use ndarray::arr2;
 
     #[test]
-    fn test_calc_tri_illum() {
+    fn _test_calc_tri_illum() {
         // let expected = 961644u32;
         let expected = Colour::from_u32(961644);
 
@@ -549,6 +591,8 @@ mod tests {
             fov: 60.,
             position,
             yaw,
+            fwd_speed: 10.,
+            yaw_speed: 1.,
         };
 
         let result = cam.create_view_matrix();
@@ -854,6 +898,8 @@ mod tests {
                 z: 0.,
             },
             yaw: 0.,
+            fwd_speed: 10.,
+            yaw_speed: 1.,
         };
 
         let result = camera.create_projection_matrix(screen);
@@ -884,6 +930,8 @@ mod tests {
                 z: 0.,
             },
             yaw: 0.,
+            fwd_speed: 10.,
+            yaw_speed: 1.,
         };
 
         let result = camera.create_projection_matrix(screen);
@@ -913,6 +961,8 @@ mod tests {
                 z: 0.,
             },
             yaw: 0.,
+            fwd_speed: 10.,
+            yaw_speed: 1.,
         };
 
         let result = camera.calc_afq(&screen);

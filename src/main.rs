@@ -91,6 +91,8 @@ fn init() -> Core {
         far_plane: 1000.,
         position: cam_pos,
         yaw: 0.,
+        fwd_speed: 1.,
+        yaw_speed: 5.,
     };
 
     let proj_mat = camera.create_projection_matrix(screen);
@@ -185,22 +187,22 @@ fn handle_keys(core: &mut Core) {
     }
 
     if core.window.is_key_pressed(Key::W, KeyRepeat::Yes) {
-        core.camera.position.z = core.camera.position.z + 1.;
+        core.camera.move_forwards();
         core.view_mat = core.camera.create_view_matrix();
     }
 
     if core.window.is_key_pressed(Key::S, KeyRepeat::Yes) {
-        core.camera.position.z = core.camera.position.z - 1.;
+        core.camera.move_backwards();
         core.view_mat = core.camera.create_view_matrix();
     }
 
     if core.window.is_key_pressed(Key::A, KeyRepeat::Yes) {
-        core.camera.position.x = core.camera.position.x - 1.;
+        core.camera.move_left();
         core.view_mat = core.camera.create_view_matrix();
     }
 
     if core.window.is_key_pressed(Key::D, KeyRepeat::Yes) {
-        core.camera.position.x = core.camera.position.x + 1.;
+        core.camera.move_right();
         core.view_mat = core.camera.create_view_matrix();
     }
 
